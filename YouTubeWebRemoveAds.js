@@ -96,7 +96,6 @@
 
     if (root.responseContext) {
       delete root.responseContext.adSignalsInfo;
-      delete root.responseContext.serviceTrackingParams;
     }
 
     if (root.playbackTracking) {
@@ -115,9 +114,11 @@
     const jsonPrefix = raw.startsWith(")]}'") ? ")]}'\n" : "";
     const body = jsonPrefix ? raw.slice(jsonPrefix.length) : raw;
     const payload = JSON.parse(body);
+    const requestUrl = typeof $request !== "undefined" && $request.url ? $request.url : "";
+    const isNextResponse = /\/youtubei\/v1\/next(?:[/?]|$)/.test(requestUrl);
 
     removePlayerAds(payload);
-    scrub(payload);
+    if (!isNextResponse) scrub(payload);
 
     $done({
       body: jsonPrefix + JSON.stringify(payload)

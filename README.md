@@ -6,10 +6,11 @@ Remove ads from YouTube web JSON API responses in Safari.
 
 - `YouTubeWebRemoveAds.lpx`: Loon plugin.
 - `YouTubeWebRemoveAds.js`: response body script.
+- `YouTubeGoogleVideoInitPlayback.js`: blocks YouTube googlevideo initplayback ad requests.
 
 ## Usage
 
-Add the plugin URL to Loon:
+Add the plugin URL to Loon after publishing this folder to GitHub:
 
 ```ini
 [Plugin]
@@ -19,7 +20,7 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeWebRemoveAds.
 The plugin enables MitM for:
 
 ```ini
-www.youtube.com, m.youtube.com, youtubei.googleapis.com
+www.youtube.com, m.youtube.com, youtubei.googleapis.com, *.googlevideo.com
 ```
 
 Make sure Loon MitM is enabled and the Loon CA certificate is trusted on the device.

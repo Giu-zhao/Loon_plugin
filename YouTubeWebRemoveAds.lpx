@@ -1,5 +1,5 @@
 #!name=YouTube Web Remove Ads
-#!desc=Remove ads from YouTube web JSON API responses in Safari without touching the comments next endpoint.
+#!desc=Remove ads from YouTube web JSON API responses in Safari. This targets www.youtube.com/youtubei and m.youtube.com/youtubei only.
 #!author=Codex
 #!tag=YouTube, Safari, Ads
 #!system=iOS, iPadOS, macOS
@@ -7,7 +7,8 @@
 #!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/youtube(4).png
 
 [Script]
+http-request ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&ack.* script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeGoogleVideoInitPlayback.js, requires-body=true, binary-body-mode=true, timeout=10, tag=YouTube GoogleVideo InitPlayback, enable=true
 http-response ^https:\/\/((www|m)\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(player|browse|search|reel\/reel_watch_sequence|guide|get_watch|log_event|config|account\/account_menu)(\?.*)? script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeWebRemoveAds.js, requires-body=true, timeout=10, tag=YouTube Web Remove Ads, enable=true
 
 [MitM]
-hostname = www.youtube.com, m.youtube.com, youtubei.googleapis.com
+hostname = www.youtube.com, m.youtube.com, youtubei.googleapis.com, *.googlevideo.com

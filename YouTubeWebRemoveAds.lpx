@@ -8,7 +8,7 @@
 
 [Script]
 http-response ^https:\/\/(www|m)\.youtube\.com\/(?!youtubei\/).* script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeWebCosmetic.js, requires-body=true, timeout=10, tag=YouTube Web Cosmetic Ads, enable=true
-http-response ^https:\/\/((www|m)\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(player|browse|search|reel\/reel_watch_sequence|guide|get_watch|log_event|config|account\/account_menu)(\?.*)? script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeWebRemoveAds.js, requires-body=true, timeout=10, tag=YouTube Web Remove Ads, enable=true
+http-response ^https:\/\/((www|m)\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(player|browse|search|reel\/reel_watch_sequence|guide|get_watch|log_event|config|account\/account_menu)(\?.*)? script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeWebRemoveAds.js?v=20260727-playerfix, requires-body=true, timeout=10, tag=YouTube Web Remove Ads, enable=true
 
 [MitM]
 hostname = www.youtube.com, m.youtube.com, youtubei.googleapis.com

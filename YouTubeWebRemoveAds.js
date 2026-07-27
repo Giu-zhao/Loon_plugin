@@ -98,12 +98,6 @@
       delete root.responseContext.adSignalsInfo;
     }
 
-    if (root.playbackTracking) {
-      for (const key of Object.keys(root.playbackTracking)) {
-        if (/ad|atr|ptracking/i.test(key)) delete root.playbackTracking[key];
-      }
-    }
-
     return root;
   }
 
@@ -115,10 +109,11 @@
     const body = jsonPrefix ? raw.slice(jsonPrefix.length) : raw;
     const payload = JSON.parse(body);
     const requestUrl = typeof $request !== "undefined" && $request.url ? $request.url : "";
+    const isPlayerResponse = /\/youtubei\/v1\/player(?:[/?]|$)/.test(requestUrl);
     const isNextResponse = /\/youtubei\/v1\/next(?:[/?]|$)/.test(requestUrl);
 
     removePlayerAds(payload);
-    if (!isNextResponse) scrub(payload);
+    if (!isPlayerResponse && !isNextResponse) scrub(payload);
 
     $done({
       body: jsonPrefix + JSON.stringify(payload)

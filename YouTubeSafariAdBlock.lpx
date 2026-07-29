@@ -1,0 +1,25 @@
+#!name=YouTube Safari-Style AdBlock
+#!desc=Conservative YouTube web ad blocking for Loon. Rule-only, no script injection, no player API rewriting, no googlevideo blocking.
+#!author=Codex
+#!tag=YouTube, Safari, AdBlock
+#!system=iOS, iPadOS, macOS
+#!loon_version=3.4.0
+#!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/youtube(4).png
+
+[Rule]
+# Google ad delivery domains commonly used around YouTube and web ads.
+DOMAIN-SUFFIX, doubleclick.net, REJECT
+DOMAIN-SUFFIX, googleadservices.com, REJECT
+DOMAIN-SUFFIX, googlesyndication.com, REJECT
+DOMAIN-SUFFIX, googletagservices.com, REJECT
+DOMAIN-SUFFIX, 2mdn.net, REJECT
+DOMAIN-SUFFIX, adservice.google.com, REJECT
+DOMAIN-SUFFIX, pagead2.googlesyndication.com, REJECT
+DOMAIN-SUFFIX, googleads.g.doubleclick.net, REJECT
+
+# YouTube web ad and measurement endpoints. These are intentionally narrow and do not touch player, next, or googlevideo.
+DOMAIN, static.doubleclick.net, REJECT
+DOMAIN, tpc.googlesyndication.com, REJECT
+DOMAIN, securepubads.g.doubleclick.net, REJECT
+DOMAIN, pagead2.googlesyndication.com, REJECT
+DOMAIN, googleads.g.doubleclick.net, REJECT

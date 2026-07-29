@@ -11,7 +11,7 @@ Use the conservative rule-only plugin first:
 https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdBlock.lpx, enabled=true
 ```
 
-This plugin does not inject scripts, does not rewrite YouTube player APIs, and does not block `googlevideo.com`, so playback should remain stable.
+This plugin does not inject scripts, does not rewrite YouTube player APIs, and does not block `googlevideo.com` video content. It rejects QUIC for YouTube-related domains so Safari falls back to regular HTTPS through Loon, which can reduce first-load ad leakage without touching the player response.
 
 ## Files
 
@@ -22,4 +22,4 @@ This plugin does not inject scripts, does not rewrite YouTube player APIs, and d
 
 ## Notes
 
-The stable plugin only blocks known Google/YouTube advertising domains. It may not remove every video ad, but it avoids the black-screen and player-error problems caused by rewriting YouTube pages or player responses.
+The stable plugin only blocks known Google/YouTube advertising domains and forces YouTube QUIC to TCP fallback. It may not remove every video ad, but it avoids the black-screen and player-error problems caused by rewriting YouTube pages or player responses.

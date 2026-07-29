@@ -7,6 +7,12 @@
 #!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/youtube(4).png
 
 [Rule]
+# Force YouTube web traffic away from QUIC so rule matching and proxy behavior stay consistent.
+# This does not block video content; browsers fall back to HTTPS over TCP.
+AND, ((PROTOCOL, QUIC), (DOMAIN-SUFFIX, youtube.com)), REJECT
+AND, ((PROTOCOL, QUIC), (DOMAIN-SUFFIX, googlevideo.com)), REJECT
+AND, ((PROTOCOL, QUIC), (DOMAIN-SUFFIX, ytimg.com)), REJECT
+
 # Google ad delivery domains commonly used around YouTube and web ads.
 DOMAIN-SUFFIX, doubleclick.net, REJECT
 DOMAIN-SUFFIX, googleadservices.com, REJECT
@@ -16,10 +22,12 @@ DOMAIN-SUFFIX, 2mdn.net, REJECT
 DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, pagead2.googlesyndication.com, REJECT
 DOMAIN-SUFFIX, googleads.g.doubleclick.net, REJECT
+DOMAIN-SUFFIX, dartsearch.net, REJECT
 
 # YouTube web ad and measurement endpoints. These are intentionally narrow and do not touch player, next, or googlevideo.
 DOMAIN, static.doubleclick.net, REJECT
 DOMAIN, tpc.googlesyndication.com, REJECT
 DOMAIN, securepubads.g.doubleclick.net, REJECT
+DOMAIN, pubads.g.doubleclick.net, REJECT
 DOMAIN, pagead2.googlesyndication.com, REJECT
 DOMAIN, googleads.g.doubleclick.net, REJECT

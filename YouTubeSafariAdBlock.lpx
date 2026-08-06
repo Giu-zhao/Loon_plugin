@@ -34,7 +34,7 @@ DOMAIN, googleads.g.doubleclick.net, REJECT
 
 [Script]
 # Safari-style page helper: only injects on YouTube watch pages, never touches youtubei/player or googlevideo.
-http-response ^https:\/\/(www|m)\.youtube\.com\/watch(\?.*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdSkipper.js?v=20260729-skipper1, requires-body=true, timeout=10, tag=YouTube Safari Ad Skipper, enable=true
+http-response ^https:\/\/((www|m)\.)?youtube\.com\/watch(\?.*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdSkipper.js?v=20260806-hostfix1, requires-body=true, timeout=10, tag=YouTube Safari Ad Skipper, enable=true
 
 [MitM]
-hostname = www.youtube.com, m.youtube.com
+hostname = youtube.com, www.youtube.com, m.youtube.com

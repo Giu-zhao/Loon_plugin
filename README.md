@@ -14,7 +14,8 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 
 - 清理 player、browse、next、search、Shorts、guide、settings 和 get_watch
   响应中的明确广告或升级入口；
-- 可启用画中画、后台播放、字幕翻译与 YouTube Music 歌词翻译；
+- 可启用画中画、后台播放、自动字幕中文翻译与 YouTube Music 歌词翻译；
+- 处理 YouTube Music 的加密 `initplayback` 广告流；
 - 三个独立开关可隐藏上传、Shorts 和 YouTube Music 选段按钮；
 - Safari 继续清理 JSON/HTML 广告字段、页面广告容器并点击可用的跳过按钮；
 - 不改写普通 `videoplayback`、流媒体 URL、Cookie、账号状态、版权规则或历史；
@@ -42,8 +43,12 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 
 当 `lyricLang` 不是 `off` 且打开 YouTube Music 的 `MPLYt` 歌词页时，当前
 歌词正文会发送给 Google Translate 以取得译文。若不希望发送歌词，请把
-`lyricLang` 设为 `off`。除此之外，生产插件加载的脚本均来自
-`Giu-zhao/Loon_plugin`；固定上游请求脚本只作来源审计，不会被插件加载。
+`lyricLang` 设为 `off`。
+
+为处理 YouTube Music 的加密广告流，`initplayback` 请求在命中缓存密钥时会重定向
+到 `https://init-stream.maasea.workers.dev/`。该服务可能收到目标播放 URL、查询参数、
+缓存密钥及脚本参数；这是用户明确授权启用的 Maasea 上游行为。停用 `app_enhance`
+可停止该处理。
 
 ## 网络前提
 
@@ -65,10 +70,8 @@ iPadOS 必须由用户在真实设备上验证 YouTube App 的播放、信息流
 画中画、锁屏后台、字幕和按钮开关，以及 YouTube Music 的后台播放、普通/逐行
 歌词和 `lyricLang=off`。当前文档不声称 iOS/iPadOS 已实机通过。
 
-为避免把固定上游的大型 Onesie 脚本暴露给查询字符串碰撞，生产插件不会加载
-`YouTubeUltimateAppRequest.js` 或 `YouTubeUltimateAppOnesie.js`，并有意不处理
-`config`、`log_event` 响应。历史核心 App 功能不依赖这两个端点；若未来确有需要，
-应另行实现小型、精确路径匹配且可独立审计的处理器。
+生产插件只在精确匹配的 `config`、`log_event` 和 `initplayback` 端点加载固定版本的
+Maasea 请求/Onesie 脚本；其他 YouTube API 继续由仓库自有的统一脚本处理。
 
 ## 回退
 

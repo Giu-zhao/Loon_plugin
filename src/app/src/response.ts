@@ -3,7 +3,7 @@ import { Next } from '../lib/protobuf/response/next_pb'
 import { Search } from '../lib/protobuf/response/search_pb'
 import { Shorts } from '../lib/protobuf/response/shorts_pb'
 import { Guide } from '../lib/protobuf/response/guide_pb'
-import { Player, BackgroundPlayer, TranslationLanguage } from '../lib/protobuf/response/player_pb'
+import { Player, BackgroundPlayer, TranslationLanguage, CaptionTrack } from '../lib/protobuf/response/player_pb'
 import { Setting, SubSetting, SettingItem } from '../lib/protobuf/response/setting_pb'
 import { Watch } from '../lib/protobuf/response/watch_pb'
 import { YouTubeMessage } from './youtube'
@@ -174,6 +174,30 @@ export class PlayerMessage extends YouTubeMessage {
         return
       }
       for (const track of tracks) track.isTranslatable = true
+      let targetIndex = tracks.findIndex((track) => track.languageCode === target)
+      if (targetIndex < 0) {
+        let sourceIndex = tracks.findIndex((track) => track.languageCode === 'en')
+        if (sourceIndex < 0) sourceIndex = tracks.findIndex((track) => track.kind === 'asr')
+        if (sourceIndex < 0) sourceIndex = 0
+        const source = tracks[sourceIndex]
+        const separator = source.baseUrl.includes('?') ? '&' : '?'
+        tracks.push(new CaptionTrack({
+          ...source,
+          baseUrl: `${source.baseUrl}${separator}tlang=${encodeURIComponent(target)}`,
+          name: { runs: [{ text: `@Enhance (${target})` }] },
+          vssId: `.${target}`,
+          languageCode: target,
+          isTranslatable: true
+        }))
+        targetIndex = tracks.length - 1
+      }
+      if (Array.isArray(obj.audioTracks)) {
+        for (const audioTrack of obj.audioTracks) {
+          if (!audioTrack.captionTrackIndices.includes(targetIndex)) audioTrack.captionTrackIndices.push(targetIndex)
+          audioTrack.defaultCaptionTrackIndex = targetIndex
+          audioTrack.captionsInitialState = 3
+        }
+      }
       const languages = {
         de: 'Deutsch', ru: 'Русский', fr: 'Français', fil: 'Filipino', ko: '한국어', ja: '日本語',
         en: 'English', vi: 'Tiếng Việt', 'zh-Hant': '中文（繁體）', 'zh-Hans': '中文（简体）'

@@ -91,7 +91,7 @@ export function encodePlayerFixture() {
     }),
     captions: new Captions({
       playerCaptionsTrackListRenderer: new PlayerCaptionsTrackListRenderer({
-        captionTracks: [new CaptionTrack({ baseUrl: 'https://caption.example/api?lang=en', languageCode: 'en' })],
+        captionTracks: [new CaptionTrack({ baseUrl: 'https://caption.example/api?lang=en', languageCode: 'en', kind: 'asr' })],
         audioTracks: [new AudioTrack({ captionTrackIndices: [0] })],
       }),
     }),

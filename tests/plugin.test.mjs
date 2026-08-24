@@ -39,19 +39,25 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
     const escaped = endpoint.replaceAll('/', '\\\/');
     const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(escaped));
     assert.equal(responseLines.length, 1, `${endpoint} must have one response handler`);
-    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.0\.3/);
+    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.1\.0/);
   }
   assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
-  assert.doesNotMatch(plugin, /YouTubeUltimateApp(?:Request|Onesie)\.js/);
-  assert.doesNotMatch(plugin, /youtubei\\\/v1\\\/(?:config|log_event)/);
-  assert.doesNotMatch(plugin, /config.*get_setting|get_setting.*config/);
+  assert.match(plugin, /youtubei\\\/v1\\\/\(config\|log_event\).*YouTubeUltimateAppOnesie\.js\?v=2\.1\.0/);
+  assert.match(plugin, /http-request .*youtubei.*log_event.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
+  assert.match(plugin, /http-request .*googlevideo.*initplayback.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
 
   const scriptMatches = [...plugin.matchAll(/script-path=https:\/\/raw\.githubusercontent\.com\/Giu-zhao\/Loon_plugin\/main\/([^?,\s]+)/g)];
   for (const match of scriptMatches) {
     await access(path.join(root, match[1]));
     const script = await readFile(path.join(root, match[1]), 'utf8');
-    assert.doesNotMatch(script, /maasea\.workers\.dev|raw\.githubusercontent\.com\/Maasea|kelee\.one/i);
-    assert.doesNotMatch(script, /download|smartDownload|Premium/i);
+    if (match[1] === 'YouTubeUltimateAppRequest.js') {
+      assert.match(script, /https:\/\/init-stream\.maasea\.workers\.dev\//);
+    } else {
+      assert.doesNotMatch(script, /maasea\.workers\.dev|raw\.githubusercontent\.com\/Maasea|kelee\.one/i);
+    }
+    if (match[1] !== 'YouTubeUltimateAppOnesie.js') {
+      assert.doesNotMatch(script, /download|smartDownload|Premium/i);
+    }
   }
 });
 
@@ -63,7 +69,7 @@ test("plugin avoids cross-version Rewrite syntax and never rejects normal media"
     .join("\n");
 
   assert.doesNotMatch(activeConfiguration, /^\[Rewrite\]$/m);
-  assert.doesNotMatch(activeConfiguration, /initplayback/i);
+  assert.match(activeConfiguration, /initplayback/i);
   assert.doesNotMatch(activeConfiguration, /request if .* then reject/i);
   assert.doesNotMatch(activeConfiguration, /\(\?:/);
   assert.doesNotMatch(activeConfiguration, /videoplayback.*reject/i);

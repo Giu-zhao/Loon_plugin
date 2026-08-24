@@ -63,9 +63,10 @@ test("plugin uses only the exact initplayback ad marker and never rejects normal
     .join("\n");
 
   assert.match(plugin, /initplayback.*\\&oad/);
-  assert.ok(plugin.includes(String.raw`^https:\/\/(?:www\.|s\.)?youtube\.com\/api\/stats\/ads(?:[\/?].*)?$ reject-200`));
-  assert.ok(plugin.includes(String.raw`^https:\/\/(?:www\.|s\.)?youtube\.com\/pagead(?:[\/?].*)?$ reject-200`));
-  assert.ok(plugin.includes(String.raw`^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext.*$ reject-200`));
+  assert.ok(plugin.includes(String.raw`^https:\/\/(www\.|s\.)?youtube\.com\/api\/stats\/ads reject-200`));
+  assert.ok(plugin.includes(String.raw`^https:\/\/(www\.|s\.)?youtube\.com\/pagead reject-200`));
+  assert.ok(plugin.includes(String.raw`^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext reject-200`));
+  assert.doesNotMatch(activeConfiguration, /\(\?:/);
   assert.doesNotMatch(activeConfiguration, /videoplayback.*reject/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*googlevideo\.com\s*,\s*REJECT/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*(?:doubleclick|googleadservices|googlesyndication|google-analytics)/i);

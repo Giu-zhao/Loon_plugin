@@ -1,5 +1,11 @@
 # 更新记录
 
+## 2.0.1 - 2026-08-24
+
+- 简化 Rewrite 与 Script URL 正则，移除部分 iOS Loon 配置解析器不接受的非捕获组 `(?:...)`；
+- 保持广告匹配范围、Safari 页面处理和 App Protobuf 功能不变；
+- 修复手机载入配置时提示 YouTube Rewrite 行语法错误的问题。
+
 ## 2.0.0 - 2026-08-24
 
 - 支持 Loon iOS、iPadOS 和 macOS；明确不支持 tvOS；

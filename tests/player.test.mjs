@@ -62,6 +62,18 @@ test("player cleaner fails open for invalid JSON", async () => {
   assert.deepEqual(result, {});
 });
 
+test("player fail-open debug log never includes parser response snippets", async () => {
+  const secret = "private-response-fragment";
+  const { result, logs } = await runLoonScript(SCRIPT, {
+    body: `{\"ok\":true}${secret}`,
+    argument: { enabled: true, debug: true }
+  });
+
+  assert.deepEqual(result, {});
+  assert.deepEqual(logs, ["[YouTube Ultimate][player] fail-open=invalid-response"]);
+  assert.doesNotMatch(logs[0], new RegExp(secret));
+});
+
 test("player cleaner passes through when disabled", async () => {
   const { result } = await runLoonScript(SCRIPT, {
     body: JSON.stringify({ adPlacements: [] }),

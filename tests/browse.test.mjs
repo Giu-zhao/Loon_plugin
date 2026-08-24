@@ -73,6 +73,16 @@ test("browse cleaner fails open for invalid JSON", async () => {
   assert.deepEqual(result, {});
 });
 
+test("browse fail-open debug log contains no parser response snippet", async () => {
+  const secret = "private-browse-fragment";
+  const { logs } = await runLoonScript(SCRIPT, {
+    body: `{\"ok\":true}${secret}`,
+    argument: { enabled: true, debug: true }
+  });
+  assert.deepEqual(logs, ["[YouTube Ultimate][browse] fail-open=invalid-response"]);
+  assert.doesNotMatch(logs[0], new RegExp(secret));
+});
+
 test("browse cleaner passes through when disabled", async () => {
   const { result } = await runLoonScript(SCRIPT, {
     body: JSON.stringify({ contents: [{ adSlotRenderer: {} }] }),

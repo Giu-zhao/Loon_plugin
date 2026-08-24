@@ -75,6 +75,16 @@ test("next cleaner fails open for invalid JSON", async () => {
   assert.deepEqual(result, {});
 });
 
+test("next fail-open debug log contains no parser response snippet", async () => {
+  const secret = "private-next-fragment";
+  const { logs } = await runLoonScript(SCRIPT, {
+    body: `{\"ok\":true}${secret}`,
+    argument: { enabled: true, debug: true }
+  });
+  assert.deepEqual(logs, ["[YouTube Ultimate][next] fail-open=invalid-response"]);
+  assert.doesNotMatch(logs[0], new RegExp(secret));
+});
+
 test("next cleaner passes through when disabled", async () => {
   const { result } = await runLoonScript(SCRIPT, {
     body: JSON.stringify({ adPlacements: [] }),

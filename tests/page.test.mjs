@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import vm from "node:vm";
 
 import { runLoonScript } from "./helpers/run-loon-script.mjs";
 
@@ -72,4 +73,87 @@ test("page enhancer passes through when page enhancement is disabled", async () 
   });
 
   assert.deepEqual(result, {});
+});
+
+test("embedded page runtime clicks hidden skip buttons and handles added nodes without rescanning the document", async () => {
+  const { result } = await runLoonScript(SCRIPT, {
+    body: HTML,
+    headers: { "Content-Type": "text/html" }
+  });
+  const runtimeMatch = result.body.match(/<script id="ytul-page-runtime"[^>]*>([\s\S]*?)<\/script>/);
+  const styleMatch = result.body.match(/<style data-ytul="page-enhance"[^>]*>([\s\S]*?)<\/style>/);
+  assert.ok(runtimeMatch, "embedded runtime should be present");
+  assert.ok(styleMatch, "embedded style should be present");
+  assert.doesNotMatch(styleMatch[1], /ytp-ad-player-overlay|ytp-ad-overlay-container/);
+
+  let documentScans = 0;
+  let initialAdRemovals = 0;
+  let initialSkipClicks = 0;
+  let observerCallback;
+  let observerOptions;
+
+  const initialAd = {
+    remove() { initialAdRemovals += 1; }
+  };
+  const initialSkip = {
+    disabled: false,
+    getClientRects() { return []; },
+    click() { initialSkipClicks += 1; }
+  };
+  const document = {
+    documentElement: { nodeType: 1 },
+    querySelectorAll(selector) {
+      documentScans += 1;
+      if (selector === "ytd-ad-slot-renderer") return [initialAd];
+      if (selector === ".ytp-ad-skip-button") return [initialSkip];
+      return [];
+    }
+  };
+  const listeners = {};
+  const window = {
+    addEventListener(name, callback) { listeners[name] = callback; },
+    requestAnimationFrame(callback) { callback(); }
+  };
+
+  class MutationObserver {
+    constructor(callback) { observerCallback = callback; }
+    observe(_root, options) { observerOptions = options; }
+  }
+
+  vm.runInNewContext(runtimeMatch[1], {
+    document,
+    window,
+    MutationObserver,
+    Object,
+    Array
+  }, { timeout: 2_000 });
+
+  assert.equal(initialAdRemovals, 1);
+  assert.equal(initialSkipClicks, 1, "skip buttons must be clicked even when an ancestor is hidden");
+  assert.equal(observerOptions.childList, true);
+  assert.equal(observerOptions.subtree, true);
+  assert.equal(typeof listeners["yt-navigate-finish"], "function");
+
+  const scansAfterInitialPass = documentScans;
+  let addedAdRemovals = 0;
+  let addedSkipClicks = 0;
+  const addedAd = {
+    nodeType: 1,
+    matches(selector) { return selector === "ytd-ad-slot-renderer"; },
+    querySelectorAll() { return []; },
+    remove() { addedAdRemovals += 1; }
+  };
+  const addedSkip = {
+    nodeType: 1,
+    disabled: false,
+    matches(selector) { return selector === ".ytp-ad-skip-button"; },
+    querySelectorAll() { return []; },
+    click() { addedSkipClicks += 1; }
+  };
+
+  observerCallback([{ addedNodes: [addedAd, addedSkip] }]);
+
+  assert.equal(addedAdRemovals, 1);
+  assert.equal(addedSkipClicks, 1);
+  assert.equal(documentScans, scansAfterInitialPass, "mutation handling must inspect added nodes only");
 });

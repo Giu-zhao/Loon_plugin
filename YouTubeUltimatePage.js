@@ -52,10 +52,7 @@ ytd-in-feed-ad-layout-renderer,
 ytd-action-companion-ad-renderer,
 ytd-companion-slot-renderer,
 ytd-player-legacy-desktop-watch-ads-renderer,
-#player-ads,
-.ytp-ad-overlay-container,
-.ytp-ad-player-overlay,
-.ytp-ad-image-overlay {
+#player-ads {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
@@ -150,25 +147,66 @@ ytd-player-legacy-desktop-watch-ads-renderer,
     }
   }
 
-  function removeAdNodes() {
-    REMOVE_SELECTORS.forEach(function (selector) {
-      document.querySelectorAll(selector).forEach(function (node) { node.remove(); });
+  function forEachMatch(root, selectors, callback) {
+    selectors.forEach(function (selector) {
+      if (root.matches && root.matches(selector)) callback(root);
+      if (root.querySelectorAll) root.querySelectorAll(selector).forEach(callback);
     });
   }
 
-  function clickSkipButtons() {
-    SKIP_SELECTORS.forEach(function (selector) {
-      document.querySelectorAll(selector).forEach(function (button) {
-        if (!button.disabled && button.getClientRects().length > 0) button.click();
-      });
+  function removeAdNodes(root) {
+    forEachMatch(root, REMOVE_SELECTORS, function (node) {
+      node.remove();
     });
   }
 
-  function cleanPage() {
-    removeAdNodes();
-    clickSkipButtons();
+  function clickSkipButtons(root) {
+    forEachMatch(root, SKIP_SELECTORS, function (button) {
+      if (!button.disabled) button.click();
+    });
+  }
+
+  function cleanInitialData() {
     if (window.ytInitialData) cleanData(window.ytInitialData);
     if (window.ytInitialPlayerResponse) cleanData(window.ytInitialPlayerResponse);
+  }
+
+  function cleanRoot(root) {
+    removeAdNodes(root);
+    clickSkipButtons(root);
+  }
+
+  function cleanDocument() {
+    cleanRoot(document);
+    cleanInitialData();
+  }
+
+  var queuedNodes = [];
+  var framePending = false;
+
+  function flushQueuedNodes() {
+    framePending = false;
+    var nodes = queuedNodes;
+    queuedNodes = [];
+    nodes.forEach(cleanRoot);
+  }
+
+  function queueNode(node) {
+    if (!node || node.nodeType !== 1) return;
+    queuedNodes.push(node);
+    if (framePending) return;
+    framePending = true;
+    window.requestAnimationFrame(flushQueuedNodes);
+  }
+
+  function handleMutations(records) {
+    records.forEach(function (record) {
+      Array.prototype.forEach.call(record.addedNodes || [], queueNode);
+    });
+  }
+
+  function handleNavigation() {
+    cleanDocument();
   }
 
   hookInitialData("ytInitialData");
@@ -176,12 +214,11 @@ ytd-player-legacy-desktop-watch-ads-renderer,
 
   var root = document.documentElement;
   if (root) {
-    new MutationObserver(cleanPage).observe(root, { childList: true, subtree: true });
+    new MutationObserver(handleMutations).observe(root, { childList: true, subtree: true });
   }
-  window.addEventListener("yt-navigate-finish", cleanPage, true);
-  window.addEventListener("DOMContentLoaded", cleanPage, true);
-  window.setInterval(clickSkipButtons, 800);
-  cleanPage();
+  window.addEventListener("yt-navigate-finish", handleNavigation, true);
+  window.addEventListener("DOMContentLoaded", handleNavigation, true);
+  cleanDocument();
 })();
 </script>`;
 
@@ -193,9 +230,9 @@ ytd-player-legacy-desktop-watch-ads-renderer,
       console.log("[YouTube Ultimate][page] injected=1 nonce=" + (nonceMatch ? "yes" : "no"));
     }
     return $done({ body: updatedBody });
-  } catch (error) {
+  } catch (_) {
     if (optionEnabled("debug", false)) {
-      console.log("[YouTube Ultimate][page] fail-open=" + error.message);
+      console.log("[YouTube Ultimate][page] fail-open=invalid-response");
     }
     return $done({});
   }

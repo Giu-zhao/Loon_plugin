@@ -44,11 +44,12 @@ test("plugin uses narrow ad rejection and does not intercept video CDN traffic",
     .join("\n");
 
   assert.match(plugin, /api\\\/stats\\\/ads/);
-  assert.match(plugin, /pagead\|ptracking/);
+  assert.match(plugin, /pagead/);
   assert.match(plugin, /adcontext/);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*(?:doubleclick|googleadservices|googlesyndication|google-analytics)/i);
   assert.doesNotMatch(activeConfiguration, /googlevideo\.com/i);
   assert.doesNotMatch(activeConfiguration, /ytimg\.com/i);
+  assert.doesNotMatch(activeConfiguration, /ptracking/i);
 });
 
 test("plugin scopes QUIC fallback and MitM to YouTube page and API hosts", async () => {

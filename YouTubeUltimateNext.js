@@ -87,9 +87,9 @@
 
     if (stats.removed === 0) return $done({});
     return $done({ body: prefix + JSON.stringify(payload) });
-  } catch (error) {
+  } catch (_) {
     if (optionEnabled("debug", false)) {
-      console.log("[YouTube Ultimate][next] fail-open=" + error.message);
+      console.log("[YouTube Ultimate][next] fail-open=invalid-response");
     }
     return $done({});
   }

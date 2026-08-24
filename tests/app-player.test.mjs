@@ -25,13 +25,14 @@ test('player enables mini player and background playback', async () => {
   assert.equal(player.playabilityStatus.backgroundPlayer.backgroundPlayerRender.active, true);
 });
 
-test('player adds and selects caption translation and honors off', async () => {
+test('player exposes native caption translation without creating an unloadable track', async () => {
   const player = decodePlayer((await playerRun()).result.body);
   const list = player.captions.playerCaptionsTrackListRenderer;
-  const index = list.captionTracks.findIndex((track) => track.languageCode === 'zh-Hans');
-  assert.ok(index >= 0);
-  assert.match(list.captionTracks[index].baseUrl, /[?&]tlang=zh-Hans/);
-  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, index);
+  assert.equal(list.captionTracks.length, 1);
+  assert.equal(list.captionTracks[0].languageCode, 'en');
+  assert.equal(list.captionTracks[0].isTranslatable, true);
+  assert.ok(list.translationLanguages.some((language) => language.languageCode === 'zh-Hans'));
+  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, undefined);
 
   const off = decodePlayer((await playerRun({ captionLang: 'off' })).result.body);
   assert.equal(off.captions.playerCaptionsTrackListRenderer.captionTracks.length, 1);

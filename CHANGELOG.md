@@ -1,5 +1,9 @@
 # 更新记录
 
+## 2.0.3 - 2026-08-24
+
+- 修复 YouTube App 字幕加载失败：不再伪造并强制选中翻译字幕轨道，改用 YouTube 原生字幕翻译入口。
+
 ## 2.0.2 - 2026-08-24
 
 - 移除共享配置会被 macOS Loon 自动转换的 YouTube Rewrite，避免较旧 iOS Loon 无法解析 `request if ... then reject(...)`；

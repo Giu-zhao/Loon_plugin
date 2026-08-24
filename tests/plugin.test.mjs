@@ -39,7 +39,7 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
     const escaped = endpoint.replaceAll('/', '\\\/');
     const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(escaped));
     assert.equal(responseLines.length, 1, `${endpoint} must have one response handler`);
-    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.0\.0/);
+    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.0\.3/);
   }
   assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
   assert.doesNotMatch(plugin, /YouTubeUltimateApp(?:Request|Onesie)\.js/);

@@ -187,14 +187,17 @@ export class PlayerMessage extends YouTubeMessage {
           name: { runs: [{ text: `@Enhance (${target})` }] },
           vssId: `.${target}`,
           languageCode: target,
+          kind: undefined,
           isTranslatable: true
         }))
         targetIndex = tracks.length - 1
       }
+      obj.defaultCaptionTrackIndex = targetIndex
       if (Array.isArray(obj.audioTracks)) {
         for (const audioTrack of obj.audioTracks) {
           if (!audioTrack.captionTrackIndices.includes(targetIndex)) audioTrack.captionTrackIndices.push(targetIndex)
           audioTrack.defaultCaptionTrackIndex = targetIndex
+          audioTrack.hasDefaultTrack = true
           audioTrack.captionsInitialState = 3
         }
       }

@@ -93,7 +93,7 @@ async function run(): Promise<Record<string, unknown>> {
   if (isJson(header('content-type'), payload.bytes, payload.text)) {
     const raw = payload.text ?? new TextDecoder().decode(payload.bytes);
     if (!raw) return {};
-    const result = cleanYouTubeJson(endpoint.split('/').pop() ?? endpoint, raw);
+    const result = cleanYouTubeJson(endpoint.split('/').pop() ?? endpoint, raw, argument.captionLang);
     if (argument.debug) console.log(`[YouTube Ultimate][${endpoint}] type=json removed=${result.removed}`);
     return result.changed ? { body: payload.binary ? new TextEncoder().encode(result.body) : result.body } : {};
   }

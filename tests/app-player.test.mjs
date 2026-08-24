@@ -31,10 +31,13 @@ test('player clones the automatic caption track and selects a loadable Chinese t
   assert.equal(list.captionTracks.length, 2);
   assert.equal(list.captionTracks[0].kind, 'asr');
   assert.equal(list.captionTracks[1].languageCode, 'zh-Hans');
-  assert.equal(list.captionTracks[1].kind, 'asr');
+  assert.equal(list.captionTracks[1].kind, undefined);
   assert.match(list.captionTracks[1].baseUrl, /[?&]tlang=zh-Hans(?:&|$)/);
   assert.ok(list.translationLanguages.some((language) => language.languageCode === 'zh-Hans'));
+  assert.equal(list.defaultCaptionTrackIndex, 1);
   assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, 1);
+  assert.equal(list.audioTracks[0].hasDefaultTrack, true);
+  assert.equal(list.audioTracks[0].captionsInitialState, 3);
 
   const off = decodePlayer((await playerRun({ captionLang: 'off' })).result.body);
   assert.equal(off.captions.playerCaptionsTrackListRenderer.captionTracks.length, 1);

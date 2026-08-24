@@ -189,6 +189,12 @@ export class SurgeClient extends Client {
         (error: any, response: HttpClientResponse, data: SurgeBody) => {
           if (error) {
             reject(error)
+            return
+          }
+
+          if (!response) {
+            reject(new Error('HTTP response missing'))
+            return
           }
 
           const bodyKey = isBinary ? 'bodyBytes' : 'body'

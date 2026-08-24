@@ -65,6 +65,11 @@ iPadOS 必须由用户在真实设备上验证 YouTube App 的播放、信息流
 画中画、锁屏后台、字幕和按钮开关，以及 YouTube Music 的后台播放、普通/逐行
 歌词和 `lyricLang=off`。当前文档不声称 iOS/iPadOS 已实机通过。
 
+为避免把固定上游的大型 Onesie 脚本暴露给查询字符串碰撞，生产插件不会加载
+`YouTubeUltimateAppRequest.js` 或 `YouTubeUltimateAppOnesie.js`，并有意不处理
+`config`、`log_event` 响应。历史核心 App 功能不依赖这两个端点；若未来确有需要，
+应另行实现小型、精确路径匹配且可独立审计的处理器。
+
 ## 回退
 
 在 Loon 中停用本插件可立即停止规则与脚本。若升级前已备份配置，也可恢复备份，

@@ -36,10 +36,7 @@ export const BackgroundPlayBackSettingRenderer = proto3.makeMessageType(
   () => [
     { no: 1, name: "name", kind: "message", T: Label },
     { no: 2, name: "backgroundPlayback", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 3, name: "download", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "trackingParams", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 9, name: "downloadQualitySelection", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 10, name: "smartDownload", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 14, name: "icon", kind: "message", T: Icon },
   ],
 );
@@ -131,4 +128,3 @@ export const ClientSettingEnum = proto3.makeMessageType(
     { no: 1, name: "item", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ],
 );
-

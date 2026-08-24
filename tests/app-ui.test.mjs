@@ -18,35 +18,35 @@ function guideIds(guide) {
 }
 
 test('guide always hides upgrades and defaults preserve optional buttons', async () => {
-  const ids = guideIds(decodeGuide((await run('guide', encodeGuideFixture())).result.bodyBytes));
+  const ids = guideIds(decodeGuide((await run('guide', encodeGuideFixture())).result.body));
   assert.deepEqual(ids, ['FEuploads', 'FEshorts', 'FEmusic_immersive', 'FEhome']);
 });
 
 test('guide switches independently control uploads, Shorts and immersive', async () => {
   for (const [option, blocked] of [['blockUpload', 'FEuploads'], ['blockShorts', 'FEshorts'], ['blockImmersive', 'FEmusic_immersive']]) {
-    const ids = guideIds(decodeGuide((await run('guide', encodeGuideFixture(), { [option]: true })).result.bodyBytes));
+    const ids = guideIds(decodeGuide((await run('guide', encodeGuideFixture(), { [option]: true })).result.body));
     assert.equal(ids.includes(blocked), false);
     assert.equal(ids.includes('FEhome'), true);
   }
 });
 
 test('settings add deduplicated PIP and background controls without download flags', async () => {
-  const setting = decodeSetting((await run('account/get_setting', encodeSettingFixture())).result.bodyBytes);
+  const setting = decodeSetting((await run('account/get_setting', encodeSettingFixture())).result.body);
   const category = setting.settingItems.find((item) => item.settingCategoryCollectionRenderer?.categoryId === 10135);
   assert.equal(category.settingCategoryCollectionRenderer.subSettings.length, 1);
   const backgrounds = setting.settingItems.filter((item) => item.backgroundPlayBackSettingRenderer);
   assert.equal(backgrounds.length, 1);
   assert.equal(backgrounds[0].backgroundPlayBackSettingRenderer.backgroundPlayback, true);
-  assert.equal(backgrounds[0].backgroundPlayBackSettingRenderer.download, false);
-  assert.equal(backgrounds[0].backgroundPlayBackSettingRenderer.downloadQualitySelection, false);
-  assert.equal(backgrounds[0].backgroundPlayBackSettingRenderer.smartDownload, false);
+  assert.equal('download' in backgrounds[0].backgroundPlayBackSettingRenderer, false);
+  assert.equal('downloadQualitySelection' in backgrounds[0].backgroundPlayBackSettingRenderer, false);
+  assert.equal('smartDownload' in backgrounds[0].backgroundPlayBackSettingRenderer, false);
 
-  const existing = decodeSetting((await run('account/get_setting', encodeSettingFixture({ existing: true }))).result.bodyBytes);
+  const existing = decodeSetting((await run('account/get_setting', encodeSettingFixture({ existing: true }))).result.body);
   assert.equal(existing.settingItems.filter((item) => item.backgroundPlayBackSettingRenderer).length, 1);
 });
 
 test('get_watch processes nested player and next messages', async () => {
-  const watch = decodeWatch((await run('get_watch', encodeWatchFixture())).result.bodyBytes);
+  const watch = decodeWatch((await run('get_watch', encodeWatchFixture())).result.body);
   const player = watch.contents.find((item) => item.player).player;
   const next = watch.contents.find((item) => item.next).next;
   assert.equal(player.adPlacements.length, 0);

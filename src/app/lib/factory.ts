@@ -15,17 +15,22 @@ const messages = new Map<string, new () => YouTubeMessage>([
   ['next', NextMessage],
   ['player', PlayerMessage],
   ['search', SearchMessage],
-  ['reel_watch_sequence', ShortsMessage],
+  ['reel/reel_watch_sequence', ShortsMessage],
   ['guide', GuideMessage],
-  ['get_setting', SettingMessage],
+  ['account/get_setting', SettingMessage],
   ['get_watch', WatchMessage]
 ])
 
 export default function createMessage (url: string): YouTubeMessage | null {
-  for (const [path, MessageClass] of messages.entries()) {
-    if (url.includes(path)) {
-      return new MessageClass()
-    }
+  let pathname: string
+  try {
+    pathname = new URL(url).pathname
+  } catch (_) {
+    return null
   }
-  return null
+  const prefix = '/youtubei/v1/'
+  if (!pathname.startsWith(prefix)) return null
+  const endpoint = pathname.slice(prefix.length).replace(/\/+$/, '')
+  const MessageClass = messages.get(endpoint)
+  return MessageClass ? new MessageClass() : null
 }

@@ -21,7 +21,7 @@ function richItems(message) {
 
 test('browse removes only explicit pagead unknown-field entries and persists metadata only', async () => {
   const result = await run('browse', encodeBrowseFixture());
-  const renderers = decodeBrowse(result.result.bodyBytes).content.sectionListRenderer.sectionListSupportedRenderers;
+  const renderers = decodeBrowse(result.result.body).content.sectionListRenderer.sectionListSupportedRenderers;
   assert.equal(renderers[0].itemSectionRenderer.richItemContent.length, 1);
   assert.equal(renderers.length, 2, 'normal Shorts shelf must remain by default');
   const cache = result.store.get('YTUL.App.AdvertiseInfo.v2');
@@ -31,19 +31,19 @@ test('browse removes only explicit pagead unknown-field entries and persists met
 
 test('blockShorts controls only the Shorts shelf', async () => {
   const enabled = await run('browse', encodeBrowseFixture(), { blockShorts: true });
-  const renderers = decodeBrowse(enabled.result.bodyBytes).content.sectionListRenderer.sectionListSupportedRenderers;
+  const renderers = decodeBrowse(enabled.result.body).content.sectionListRenderer.sectionListSupportedRenderers;
   assert.equal(renderers.length, 1);
 });
 
 test('search and next remove only explicit pagead entries', async () => {
-  const search = decodeSearch((await run('search', encodeSearchFixture())).result.bodyBytes);
+  const search = decodeSearch((await run('search', encodeSearchFixture())).result.body);
   assert.equal(search.content.sectionListRenderer.sectionListSupportedRenderers[0].itemSectionRenderer.richItemContent.length, 1);
-  const next = decodeNext((await run('next', encodeNextFixture())).result.bodyBytes);
+  const next = decodeNext((await run('next', encodeNextFixture())).result.body);
   assert.equal(next.content.nextResult.content.sectionListRenderer.sectionListSupportedRenderers[0].itemSectionRenderer.richItemContent.length, 1);
 });
 
 test('Shorts sequence removes entries without overlay', async () => {
-  const shorts = decodeShorts((await run('reel/reel_watch_sequence', encodeShortsFixture())).result.bodyBytes);
+  const shorts = decodeShorts((await run('reel/reel_watch_sequence', encodeShortsFixture())).result.body);
   assert.equal(shorts.entries.length, 1);
   assert.ok(shorts.entries[0].command.reelWatchEndpoint.overlay);
 });

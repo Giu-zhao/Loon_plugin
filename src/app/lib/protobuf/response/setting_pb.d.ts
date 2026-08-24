@@ -80,24 +80,9 @@ export declare class BackgroundPlayBackSettingRenderer extends Message<Backgroun
   backgroundPlayback: boolean;
 
   /**
-   * @generated from field: bool download = 3;
-   */
-  download: boolean;
-
-  /**
    * @generated from field: bytes trackingParams = 5;
    */
   trackingParams: Uint8Array;
-
-  /**
-   * @generated from field: bool downloadQualitySelection = 9;
-   */
-  downloadQualitySelection: boolean;
-
-  /**
-   * @generated from field: bool smartDownload = 10;
-   */
-  smartDownload: boolean;
 
   /**
    * @generated from field: youtube.response.setting.Icon icon = 14;
@@ -350,4 +335,3 @@ export declare class ClientSettingEnum extends Message<ClientSettingEnum> {
 
   static equals(a: ClientSettingEnum | PlainMessage<ClientSettingEnum> | undefined, b: ClientSettingEnum | PlainMessage<ClientSettingEnum> | undefined): boolean;
 }
-

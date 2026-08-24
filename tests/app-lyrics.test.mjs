@@ -16,7 +16,7 @@ async function runLyrics(options = {}) {
 
 test('ordinary lyrics append translation and disclose Google attribution', async () => {
   const result = await runLyrics();
-  const browse = decodeBrowse(result.result.bodyBytes);
+  const browse = decodeBrowse(result.result.body);
   const shelf = browse.content.sectionListRenderer.sectionListSupportedRenderers[0].musicDescriptionShelfRenderer;
   assert.match(shelf.description.runs[0].text, /第一行/);
   assert.match(shelf.footer.runs[0].text, /Translated by Google/);
@@ -24,7 +24,7 @@ test('ordinary lyrics append translation and disclose Google attribution', async
 });
 
 test('timed lyrics append translations line by line', async () => {
-  const browse = decodeBrowse((await runLyrics({ timed: true })).result.bodyBytes);
+  const browse = decodeBrowse((await runLyrics({ timed: true })).result.body);
   const runs = browse.content.sectionListRenderer.sectionListSupportedRenderers[0]
     .itemSectionRenderer.richItemContent[0].videoWithContextRenderer.videoRendererContent
     .videoInfo.videoContext.videoContent.timedLyricsRender.timedLyricsContent.runs;
@@ -57,4 +57,16 @@ test('same-language, invalid JSON, HTTP failure and line mismatch preserve lyric
     const failed = await runLyrics({ timed: true, fetchResponse });
     assert.deepEqual(failed.result, {});
   }
+});
+
+test('translation network error fails open once with original lyrics preserved', async () => {
+  const run = await runLoonBinaryScript('YouTubeUltimateAPI.js', {
+    requestUrl: 'https://youtubei.googleapis.com/youtubei/v1/browse',
+    bodyBytes: encodeLyricsFixture({ timed: true }),
+    argument: { ...DEFAULT_ARGUMENT, debug: true },
+    fetchError: new Error('synthetic-network-error'),
+  });
+  assert.equal(run.doneCalls, 1);
+  assert.deepEqual(run.result, {});
+  assert.doesNotMatch(run.logs.join('\n'), /line one|line two|synthetic-network-error/);
 });

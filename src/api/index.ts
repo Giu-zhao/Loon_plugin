@@ -61,11 +61,16 @@ function header(name: string): string {
   return '';
 }
 
-function bytesFromResponse(): Uint8Array {
-  const bytes = $response?.bodyBytes;
-  if (bytes instanceof Uint8Array) return bytes;
-  if (bytes instanceof ArrayBuffer) return new Uint8Array(bytes);
-  return new Uint8Array();
+function responsePayload(): { bytes: Uint8Array, text?: string, binary: boolean } {
+  const body = $response?.body;
+  if (body instanceof Uint8Array) return { bytes: body, binary: true };
+  if (body instanceof ArrayBuffer) return { bytes: new Uint8Array(body), binary: true };
+  if (typeof body === 'string') return { bytes: new TextEncoder().encode(body), text: body, binary: false };
+
+  const compatibilityBytes = $response?.bodyBytes;
+  if (compatibilityBytes instanceof Uint8Array) return { bytes: compatibilityBytes, binary: true };
+  if (compatibilityBytes instanceof ArrayBuffer) return { bytes: new Uint8Array(compatibilityBytes), binary: true };
+  return { bytes: new Uint8Array(), binary: false };
 }
 
 function isJson(contentType: string, bytes: Uint8Array, body?: string): boolean {
@@ -84,20 +89,19 @@ async function run(): Promise<Record<string, unknown>> {
   if (!argument.enabled) return {};
 
   const endpoint = endpointFromUrl($request?.url ?? '');
-  const bytes = bytesFromResponse();
-  const body = typeof $response?.body === 'string' ? $response.body : undefined;
-  if (isJson(header('content-type'), bytes, body)) {
-    const raw = body ?? new TextDecoder().decode(bytes);
+  const payload = responsePayload();
+  if (isJson(header('content-type'), payload.bytes, payload.text)) {
+    const raw = payload.text ?? new TextDecoder().decode(payload.bytes);
     if (!raw) return {};
     const result = cleanYouTubeJson(endpoint.split('/').pop() ?? endpoint, raw);
     if (argument.debug) console.log(`[YouTube Ultimate][${endpoint}] type=json removed=${result.removed}`);
-    return result.changed ? { body: result.body } : {};
+    return result.changed ? { body: payload.binary ? new TextEncoder().encode(result.body) : result.body } : {};
   }
 
-  if (!argument.app_enhance || bytes.length === 0) return {};
-  const result = await handleAppResponse($request?.url ?? '', bytes);
+  if (!argument.app_enhance || payload.bytes.length === 0) return {};
+  const result = await handleAppResponse($request?.url ?? '', payload.bytes);
   if (argument.debug) console.log(`[YouTube Ultimate][${endpoint}] type=protobuf changed=${result.changed}`);
-  return result.changed && result.bodyBytes ? { bodyBytes: result.bodyBytes } : {};
+  return result.changed && result.bodyBytes ? { body: result.bodyBytes } : {};
 }
 
 void run()

@@ -29,7 +29,7 @@ export async function runLoonBinaryScript(scriptName, options = {}) {
     fail = reject;
   });
 
-  const bodyBytes = options.bodyBytes instanceof Uint8Array
+  const responseBody = options.bodyBytes instanceof Uint8Array
     ? options.bodyBytes
     : new Uint8Array(options.bodyBytes ?? []);
   const context = {
@@ -41,8 +41,8 @@ export async function runLoonBinaryScript(scriptName, options = {}) {
       bodyBytes: options.requestBodyBytes,
     },
     $response: {
-      body: options.body,
-      bodyBytes,
+      ...(options.omitBody ? {} : { body: options.body ?? responseBody }),
+      ...(options.legacyBodyBytes ? { bodyBytes: options.legacyBodyBytes } : {}),
       headers: options.headers ?? { 'Content-Type': 'application/x-protobuf' },
       status: options.status ?? 200,
     },
@@ -52,6 +52,10 @@ export async function runLoonBinaryScript(scriptName, options = {}) {
     },
     $httpClient: {
       get(request, callback) {
+        if (options.fetchError) {
+          queueMicrotask(() => callback(options.fetchError, undefined, undefined));
+          return;
+        }
         const response = options.fetchResponse ?? { status: 503, body: '' };
         queueMicrotask(() => callback(null, response, response.body ?? ''));
       },
@@ -87,6 +91,7 @@ export async function runLoonBinaryScript(scriptName, options = {}) {
 
   if (doneCalls.length !== 1) throw new Error(`${scriptName} called $done ${doneCalls.length} times`);
   const result = structuredClone(doneCalls[0]);
+  if (result.body instanceof Uint8Array || result.body instanceof ArrayBuffer) result.body = new Uint8Array(result.body);
   if (result.bodyBytes) result.bodyBytes = new Uint8Array(result.bodyBytes);
   return { result, doneCalls: doneCalls.length, logs, store };
 }

@@ -15,10 +15,7 @@ message SettingItem{
 message BackgroundPlayBackSettingRenderer{
   youtube.component.Label name = 1;
   bool backgroundPlayback = 2;
-  bool download = 3;
   bytes trackingParams = 5;
-  bool downloadQualitySelection = 9;
-  bool smartDownload = 10;
   Icon icon = 14;
 }
 

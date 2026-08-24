@@ -96,6 +96,16 @@ test('root package and lock pin the approved build dependency versions', async (
   assert.equal(packageLock.packages['node_modules/typescript'].version, '4.9.4');
 });
 
+test('third-party notices publish protobuf version and applicable license terms', async () => {
+  const notices = await readFile(path.join(root, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  assert.match(notices, /@bufbuild\/protobuf`? 1\.7\.2/);
+  assert.match(notices, /Apache License 2\.0/);
+  assert.match(notices, /Copyright 2008 Google Inc\./);
+  assert.match(notices, /Redistribution and use in source and binary forms/);
+  assert.match(notices, /Neither the name of Google Inc\. nor the names of its contributors/);
+  assert.match(notices, /THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"/);
+});
+
 test('two clean bundle builds are byte-for-byte identical', async () => {
   await execFileAsync(process.execPath, ['scripts/build-app.mjs'], { cwd: root });
   const first = await sha256('YouTubeUltimateAPI.js');

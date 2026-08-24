@@ -42,24 +42,16 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
     assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.0\.0/);
   }
   assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
-  assert.doesNotMatch(plugin, /YouTubeUltimateAppRequest\.js/);
-
-  for (const endpoint of ['config', 'log_event']) {
-    const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(endpoint));
-    assert.equal(responseLines.length, 1, `${endpoint} must have one safe Onesie handler`);
-    assert.match(responseLines[0], /YouTubeUltimateAppOnesie\.js\?v=2\.0\.0/);
-  }
+  assert.doesNotMatch(plugin, /YouTubeUltimateApp(?:Request|Onesie)\.js/);
+  assert.doesNotMatch(plugin, /youtubei\\\/v1\\\/(?:config|log_event)/);
+  assert.doesNotMatch(plugin, /config.*get_setting|get_setting.*config/);
 
   const scriptMatches = [...plugin.matchAll(/script-path=https:\/\/raw\.githubusercontent\.com\/Giu-zhao\/Loon_plugin\/main\/([^?,\s]+)/g)];
   for (const match of scriptMatches) {
     await access(path.join(root, match[1]));
     const script = await readFile(path.join(root, match[1]), 'utf8');
     assert.doesNotMatch(script, /maasea\.workers\.dev|raw\.githubusercontent\.com\/Maasea|kelee\.one/i);
-    if (match[1] === 'YouTubeUltimateAppOnesie.js') {
-      const urls = [...new Set(script.match(/https?:\/\/[^"'`\s)]+/g) ?? [])];
-      assert.deepEqual(urls, ['https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support']);
-      assert.doesNotMatch(script, /init-stream|translate\.google\.com/i);
-    }
+    assert.doesNotMatch(script, /download|smartDownload|Premium/i);
   }
 });
 
@@ -71,6 +63,9 @@ test("plugin uses only the exact initplayback ad marker and never rejects normal
     .join("\n");
 
   assert.match(plugin, /initplayback.*\\&oad/);
+  assert.ok(plugin.includes(String.raw`^https:\/\/(?:www\.|s\.)?youtube\.com\/api\/stats\/ads(?:[\/?].*)?$ reject-200`));
+  assert.ok(plugin.includes(String.raw`^https:\/\/(?:www\.|s\.)?youtube\.com\/pagead(?:[\/?].*)?$ reject-200`));
+  assert.ok(plugin.includes(String.raw`^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext.*$ reject-200`));
   assert.doesNotMatch(activeConfiguration, /videoplayback.*reject/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*googlevideo\.com\s*,\s*REJECT/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*(?:doubleclick|googleadservices|googlesyndication|google-analytics)/i);

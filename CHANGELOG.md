@@ -15,8 +15,8 @@
   `googlevideo.com`；
 - 固定 `@bufbuild/protobuf`、esbuild 和 TypeScript 版本，补充 Apache-2.0
   第三方声明与来源校验；
-- 上游 Request 构建产物只保留作审计，不被生产插件引用；插件引用脚本均由自动化
-  测试扫描第三方运行时 URL；
+- 上游 Request 与 Onesie 构建产物均只保留作审计，不被生产插件引用；为避免
+  查询字符串路由碰撞，生产插件有意不处理 `config`/`log_event` 响应；
 - 不提供 Premium/下载权益伪造或 SponsorBlock。
 
 自动化测试不等于真实设备验收；iOS/iPadOS 功能仍需用户实机验证。

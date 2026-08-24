@@ -55,6 +55,11 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
     await access(path.join(root, match[1]));
     const script = await readFile(path.join(root, match[1]), 'utf8');
     assert.doesNotMatch(script, /maasea\.workers\.dev|raw\.githubusercontent\.com\/Maasea|kelee\.one/i);
+    if (match[1] === 'YouTubeUltimateAppOnesie.js') {
+      const urls = [...new Set(script.match(/https?:\/\/[^"'`\s)]+/g) ?? [])];
+      assert.deepEqual(urls, ['https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support']);
+      assert.doesNotMatch(script, /init-stream|translate\.google\.com/i);
+    }
   }
 });
 

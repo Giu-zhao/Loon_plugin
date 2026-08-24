@@ -4,8 +4,11 @@ import { access, mkdtemp, readdir, readFile, rm, symlink, writeFile } from 'node
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { promisify } from 'node:util';
+import { execFile } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const execFileAsync = promisify(execFile);
 
 async function sha256(relativePath) {
   const contents = await readFile(path.join(root, relativePath));
@@ -79,4 +82,23 @@ test('generated API bundle has a stable banner and no build timestamp', async ()
   const bundle = await readFile(path.join(root, 'YouTubeUltimateAPI.js'), 'utf8');
   assert.match(bundle, /^\/\* YouTube Ultimate API 2\.0\.0 \*\//);
   assert.doesNotMatch(bundle, /Build:\s*\d{4}|toLocaleString/);
+});
+
+test('root package and lock pin the approved build dependency versions', async () => {
+  const packageJson = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  const packageLock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
+  assert.equal(packageJson.version, '2.0.0');
+  assert.equal(packageJson.dependencies['@bufbuild/protobuf'], '1.7.2');
+  assert.equal(packageJson.devDependencies.esbuild, '0.16.17');
+  assert.equal(packageJson.devDependencies.typescript, '4.9.4');
+  assert.equal(packageLock.packages['node_modules/@bufbuild/protobuf'].version, '1.7.2');
+  assert.equal(packageLock.packages['node_modules/esbuild'].version, '0.16.17');
+  assert.equal(packageLock.packages['node_modules/typescript'].version, '4.9.4');
+});
+
+test('two clean bundle builds are byte-for-byte identical', async () => {
+  await execFileAsync(process.execPath, ['scripts/build-app.mjs'], { cwd: root });
+  const first = await sha256('YouTubeUltimateAPI.js');
+  await execFileAsync(process.execPath, ['scripts/build-app.mjs'], { cwd: root });
+  assert.equal(await sha256('YouTubeUltimateAPI.js'), first);
 });

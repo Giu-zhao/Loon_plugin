@@ -91,6 +91,7 @@ test("embedded page runtime clicks hidden skip buttons and handles added nodes w
   let initialSkipClicks = 0;
   let observerCallback;
   let observerOptions;
+  const frameCallbacks = [];
 
   const initialAd = {
     remove() { initialAdRemovals += 1; }
@@ -112,7 +113,7 @@ test("embedded page runtime clicks hidden skip buttons and handles added nodes w
   const listeners = {};
   const window = {
     addEventListener(name, callback) { listeners[name] = callback; },
-    requestAnimationFrame(callback) { callback(); }
+    requestAnimationFrame(callback) { frameCallbacks.push(callback); }
   };
 
   class MutationObserver {
@@ -132,6 +133,8 @@ test("embedded page runtime clicks hidden skip buttons and handles added nodes w
   assert.equal(initialSkipClicks, 1, "skip buttons must be clicked even when an ancestor is hidden");
   assert.equal(observerOptions.childList, true);
   assert.equal(observerOptions.subtree, true);
+  assert.equal(observerOptions.attributes, true);
+  assert.deepEqual(Array.from(observerOptions.attributeFilter), ["disabled", "aria-disabled"]);
   assert.equal(typeof listeners["yt-navigate-finish"], "function");
 
   const scansAfterInitialPass = documentScans;
@@ -153,7 +156,29 @@ test("embedded page runtime clicks hidden skip buttons and handles added nodes w
 
   observerCallback([{ addedNodes: [addedAd, addedSkip] }]);
 
+  assert.equal(frameCallbacks.length, 1, "multiple nodes in one mutation batch should share one frame");
+  assert.equal(addedAdRemovals, 0);
+  assert.equal(addedSkipClicks, 0);
+  frameCallbacks.shift()();
   assert.equal(addedAdRemovals, 1);
   assert.equal(addedSkipClicks, 1);
   assert.equal(documentScans, scansAfterInitialPass, "mutation handling must inspect added nodes only");
+
+  let transitionedSkipClicks = 0;
+  const transitionedSkip = {
+    nodeType: 1,
+    disabled: true,
+    matches(selector) { return selector === ".ytp-ad-skip-button"; },
+    querySelectorAll() { return []; },
+    click() { transitionedSkipClicks += 1; }
+  };
+  observerCallback([{ addedNodes: [transitionedSkip] }]);
+  frameCallbacks.shift()();
+  assert.equal(transitionedSkipClicks, 0);
+
+  transitionedSkip.disabled = false;
+  observerCallback([{ type: "attributes", target: transitionedSkip, addedNodes: [] }]);
+  assert.equal(frameCallbacks.length, 1);
+  frameCallbacks.shift()();
+  assert.equal(transitionedSkipClicks, 1);
 });

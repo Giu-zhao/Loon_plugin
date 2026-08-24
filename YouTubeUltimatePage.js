@@ -193,7 +193,7 @@ ytd-player-legacy-desktop-watch-ads-renderer,
 
   function queueNode(node) {
     if (!node || node.nodeType !== 1) return;
-    queuedNodes.push(node);
+    if (queuedNodes.indexOf(node) === -1) queuedNodes.push(node);
     if (framePending) return;
     framePending = true;
     window.requestAnimationFrame(flushQueuedNodes);
@@ -201,6 +201,7 @@ ytd-player-legacy-desktop-watch-ads-renderer,
 
   function handleMutations(records) {
     records.forEach(function (record) {
+      if (record.type === "attributes") queueNode(record.target);
       Array.prototype.forEach.call(record.addedNodes || [], queueNode);
     });
   }
@@ -214,7 +215,12 @@ ytd-player-legacy-desktop-watch-ads-renderer,
 
   var root = document.documentElement;
   if (root) {
-    new MutationObserver(handleMutations).observe(root, { childList: true, subtree: true });
+    new MutationObserver(handleMutations).observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled", "aria-disabled"]
+    });
   }
   window.addEventListener("yt-navigate-finish", handleNavigation, true);
   window.addEventListener("DOMContentLoaded", handleNavigation, true);

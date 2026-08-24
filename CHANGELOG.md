@@ -1,5 +1,11 @@
 # 更新记录
 
+## 2.0.2 - 2026-08-24
+
+- 移除共享配置会被 macOS Loon 自动转换的 YouTube Rewrite，避免较旧 iOS Loon 无法解析 `request if ... then reject(...)`；
+- 网页与 App 去广告继续由 JSON/Protobuf 响应脚本和 Safari 页面脚本完成；
+- 保留 QUIC 回退及必要 MitM，不屏蔽普通视频媒体请求。
+
 ## 2.0.1 - 2026-08-24
 
 - 简化 Rewrite 与 Script URL 正则，移除部分 iOS Loon 配置解析器不接受的非捕获组 `(?:...)`；

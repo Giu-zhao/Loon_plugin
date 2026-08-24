@@ -55,17 +55,16 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
   }
 });
 
-test("plugin uses only the exact initplayback ad marker and never rejects normal media", async () => {
+test("plugin avoids cross-version Rewrite syntax and never rejects normal media", async () => {
   const plugin = await readFile(pluginPath, "utf8");
   const activeConfiguration = plugin
     .split("\n")
     .filter((line) => line.trim() && !line.trim().startsWith("#"))
     .join("\n");
 
-  assert.match(plugin, /initplayback.*\\&oad/);
-  assert.ok(plugin.includes(String.raw`^https:\/\/(www\.|s\.)?youtube\.com\/api\/stats\/ads reject-200`));
-  assert.ok(plugin.includes(String.raw`^https:\/\/(www\.|s\.)?youtube\.com\/pagead reject-200`));
-  assert.ok(plugin.includes(String.raw`^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext reject-200`));
+  assert.doesNotMatch(activeConfiguration, /^\[Rewrite\]$/m);
+  assert.doesNotMatch(activeConfiguration, /initplayback/i);
+  assert.doesNotMatch(activeConfiguration, /request if .* then reject/i);
   assert.doesNotMatch(activeConfiguration, /\(\?:/);
   assert.doesNotMatch(activeConfiguration, /videoplayback.*reject/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*googlevideo\.com\s*,\s*REJECT/i);

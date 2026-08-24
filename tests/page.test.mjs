@@ -69,7 +69,7 @@ test("page enhancer passes through when page enhancement is disabled", async () 
   const { result } = await runLoonScript(SCRIPT, {
     body: HTML,
     headers: { "Content-Type": "text/html" },
-    argument: { enabled: true, page_enhance: false, debug: true }
+    argument: { enabled: true, web_enhance: false, debug: true }
   });
 
   assert.deepEqual(result, {});

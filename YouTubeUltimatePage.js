@@ -27,7 +27,7 @@
   }
 
   try {
-    if (!optionEnabled("enabled", true) || !optionEnabled("page_enhance", true)) {
+    if (!optionEnabled("enabled", true) || !optionEnabled("web_enhance", true)) {
       return $done({});
     }
 

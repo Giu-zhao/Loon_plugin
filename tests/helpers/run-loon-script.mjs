@@ -12,7 +12,7 @@ export async function runLoonScript(scriptName, options = {}) {
   const logs = [];
 
   const context = {
-    $argument: options.argument ?? { enabled: true, debug: false, page_enhance: true },
+    $argument: options.argument ?? { enabled: true, debug: false, web_enhance: true },
     $request: {
       method: options.method ?? "POST",
       url: options.requestUrl ?? "https://www.youtube.com/"

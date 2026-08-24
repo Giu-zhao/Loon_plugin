@@ -12,55 +12,71 @@ test("plugin has a new canonical URL so Loon does not reuse the legacy resource 
   assert.notEqual(path.basename(pluginPath), "YouTubeSafariAdBlock.lpx");
 });
 
-test("plugin replaces the old Safari-Style entry with YouTube Ultimate metadata", async () => {
+test("plugin declares the supported systems and nine approved defaults", async () => {
   const plugin = await readFile(pluginPath, "utf8");
 
-  assert.match(plugin, /^#!name\s*=\s*YouTube Ultimate - Safari$/m);
+  assert.match(plugin, /^#!name\s*=\s*YouTube Ultimate$/m);
   assert.match(plugin, /^#!author\s*=\s*Giu-zhao$/m);
-  assert.match(plugin, /^#!system\s*=\s*macOS$/m);
+  assert.match(plugin, /^#!system\s*=\s*iOS,iPadOS,macOS$/m);
+  assert.doesNotMatch(plugin, /tvOS/);
   assert.match(plugin, /^#!homepage\s*=\s*https:\/\/github\.com\/Giu-zhao\/Loon_plugin$/m);
   assert.match(plugin, /^enabled\s*=\s*switch,true,/m);
-  assert.match(plugin, /^page_enhance\s*=\s*switch,true,/m);
+  assert.match(plugin, /^web_enhance\s*=\s*switch,true,/m);
+  assert.match(plugin, /^app_enhance\s*=\s*switch,true,/m);
+  assert.match(plugin, /^blockUpload\s*=\s*switch,false,/m);
+  assert.match(plugin, /^blockShorts\s*=\s*switch,false,/m);
+  assert.match(plugin, /^blockImmersive\s*=\s*switch,false,/m);
+  assert.match(plugin, /^captionLang\s*=\s*select,zh-Hans,zh-Hant,ja,ko,en,off,/m);
+  assert.match(plugin, /^lyricLang\s*=\s*select,zh-Hans,zh-Hant,ja,ko,en,off,/m);
   assert.match(plugin, /^debug\s*=\s*switch,false,/m);
-  assert.doesNotMatch(plugin, /Safari-Style AdBlock/);
+  assert.equal((plugin.match(/^\w+\s*=\s*(?:switch|select),/gm) || []).length, 9);
 });
 
-test("plugin routes all designed YouTube endpoints to existing scripts", async () => {
+test("plugin routes each response endpoint exactly once to repository-owned scripts", async () => {
   const plugin = await readFile(pluginPath, "utf8");
+  const apiEndpoints = ['player', 'browse', 'next', 'search', 'reel/reel_watch_sequence', 'guide', 'account/get_setting', 'get_watch'];
+  for (const endpoint of apiEndpoints) {
+    const escaped = endpoint.replaceAll('/', '\\\/');
+    const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(escaped));
+    assert.equal(responseLines.length, 1, `${endpoint} must have one response handler`);
+    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.0\.0/);
+  }
+  assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
+  assert.doesNotMatch(plugin, /YouTubeUltimateAppRequest\.js/);
 
-  assert.match(plugin, /youtubei\\\/v1\\\/player/);
-  assert.match(plugin, /youtubei\\\/v1\\\/(?:browse\|search\|guide|\(browse\|search\|guide\))/);
-  assert.match(plugin, /youtubei\\\/v1\\\/(?:next\|get_watch|\(next\|get_watch\))/);
-  assert.match(plugin, /YouTubeUltimatePage\.js\?v=1\.0\.0/);
+  for (const endpoint of ['config', 'log_event']) {
+    const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(endpoint));
+    assert.equal(responseLines.length, 1, `${endpoint} must have one safe Onesie handler`);
+    assert.match(responseLines[0], /YouTubeUltimateAppOnesie\.js\?v=2\.0\.0/);
+  }
 
   const scriptMatches = [...plugin.matchAll(/script-path=https:\/\/raw\.githubusercontent\.com\/Giu-zhao\/Loon_plugin\/main\/([^?,\s]+)/g)];
-  assert.equal(scriptMatches.length, 4);
-
   for (const match of scriptMatches) {
     await access(path.join(root, match[1]));
+    const script = await readFile(path.join(root, match[1]), 'utf8');
+    assert.doesNotMatch(script, /maasea\.workers\.dev|raw\.githubusercontent\.com\/Maasea|kelee\.one/i);
   }
 });
 
-test("plugin uses narrow ad rejection and does not intercept video CDN traffic", async () => {
+test("plugin uses only the exact initplayback ad marker and never rejects normal media", async () => {
   const plugin = await readFile(pluginPath, "utf8");
   const activeConfiguration = plugin
     .split("\n")
     .filter((line) => line.trim() && !line.trim().startsWith("#"))
     .join("\n");
 
-  assert.match(plugin, /api\\\/stats\\\/ads/);
-  assert.match(plugin, /pagead/);
-  assert.match(plugin, /adcontext/);
+  assert.match(plugin, /initplayback.*\\&oad/);
+  assert.doesNotMatch(activeConfiguration, /videoplayback.*reject/i);
+  assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*googlevideo\.com\s*,\s*REJECT/i);
   assert.doesNotMatch(activeConfiguration, /DOMAIN-SUFFIX,\s*(?:doubleclick|googleadservices|googlesyndication|google-analytics)/i);
-  assert.doesNotMatch(activeConfiguration, /googlevideo\.com/i);
   assert.doesNotMatch(activeConfiguration, /ytimg\.com/i);
-  assert.doesNotMatch(activeConfiguration, /ptracking/i);
 });
 
-test("plugin scopes QUIC fallback and MitM to YouTube page and API hosts", async () => {
+test("plugin scopes QUIC fallback and MitM to YouTube API and media hosts", async () => {
   const plugin = await readFile(pluginPath, "utf8");
 
   assert.match(plugin, /AND,\(\(PROTOCOL,QUIC\),\(DOMAIN-SUFFIX,youtube\.com\)\),REJECT/);
   assert.match(plugin, /AND,\(\(PROTOCOL,QUIC\),\(DOMAIN,youtubei\.googleapis\.com\)\),REJECT/);
-  assert.match(plugin, /^hostname\s*=.*youtube\.com.*www\.youtube\.com.*m\.youtube\.com.*s\.youtube\.com.*youtubei\.googleapis\.com/m);
+  assert.match(plugin, /AND,\(\(PROTOCOL,QUIC\),\(DOMAIN-SUFFIX,googlevideo\.com\)\),REJECT/);
+  assert.match(plugin, /^hostname\s*=.*youtube\.com.*youtubei\.googleapis\.com.*\*\.googlevideo\.com/m);
 });

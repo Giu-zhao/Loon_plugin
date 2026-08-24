@@ -27,8 +27,9 @@ test('dispatcher cleans JSON strings and preserves anti-XSSI', async () => {
   assert.equal(parsed.videoDetails.videoId, 'safe');
 });
 
-test('dispatcher enables translated automatic captions for Safari player JSON', async () => {
+test('dispatcher preserves native Safari captions for manual selection', async () => {
   const fixture = {
+    adSlots: [{}],
     captions: {
       playerCaptionsTracklistRenderer: {
         captionTracks: [{
@@ -47,12 +48,10 @@ test('dispatcher enables translated automatic captions for Safari player JSON', 
     requestUrl: 'https://www.youtube.com/youtubei/v1/player',
   });
   const list = JSON.parse(run.result.body).captions.playerCaptionsTracklistRenderer;
-  assert.equal(list.captionTracks[1].languageCode, 'zh-Hans');
-  assert.equal('kind' in list.captionTracks[1], false);
-  assert.match(list.captionTracks[1].baseUrl, /[?&]tlang=zh-Hans(?:&|$)/);
-  assert.equal(list.defaultCaptionTrackIndex, 1);
-  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, 1);
-  assert.equal(list.audioTracks[0].captionsInitialState, 'CAPTIONS_INITIAL_STATE_ON_RECOMMENDED');
+  assert.equal(list.captionTracks.length, 1);
+  assert.equal(list.captionTracks[0].languageCode, 'en');
+  assert.equal(list.defaultCaptionTrackIndex, undefined);
+  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, undefined);
 });
 
 test('dispatcher detects JSON bytes in official Loon body and fails open invalid bodies', async () => {

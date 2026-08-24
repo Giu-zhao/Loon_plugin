@@ -25,19 +25,14 @@ test('player enables mini player and background playback', async () => {
   assert.equal(player.playabilityStatus.backgroundPlayer.backgroundPlayerRender.active, true);
 });
 
-test('player clones the automatic caption track and selects a loadable Chinese translation', async () => {
+test('player preserves native app captions to avoid iOS subtitle loading errors', async () => {
   const player = decodePlayer((await playerRun()).result.body);
   const list = player.captions.playerCaptionsTrackListRenderer;
-  assert.equal(list.captionTracks.length, 2);
+  assert.equal(list.captionTracks.length, 1);
   assert.equal(list.captionTracks[0].kind, 'asr');
-  assert.equal(list.captionTracks[1].languageCode, 'zh-Hans');
-  assert.equal(list.captionTracks[1].kind, undefined);
-  assert.match(list.captionTracks[1].baseUrl, /[?&]tlang=zh-Hans(?:&|$)/);
-  assert.ok(list.translationLanguages.some((language) => language.languageCode === 'zh-Hans'));
-  assert.equal(list.defaultCaptionTrackIndex, 1);
-  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, 1);
-  assert.equal(list.audioTracks[0].hasDefaultTrack, true);
-  assert.equal(list.audioTracks[0].captionsInitialState, 3);
+  assert.equal(list.captionTracks[0].languageCode, 'en');
+  assert.equal(list.defaultCaptionTrackIndex, undefined);
+  assert.equal(list.audioTracks[0].defaultCaptionTrackIndex, undefined);
 
   const off = decodePlayer((await playerRun({ captionLang: 'off' })).result.body);
   assert.equal(off.captions.playerCaptionsTrackListRenderer.captionTracks.length, 1);

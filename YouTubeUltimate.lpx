@@ -14,7 +14,6 @@ app_enhance = switch,true,tag=App 增强,desc=启用 YouTube 与 YouTube Music A
 blockUpload = switch,false,tag=隐藏上传按钮,desc=隐藏 YouTube 底栏上传按钮
 blockShorts = switch,false,tag=隐藏 Shorts 按钮,desc=隐藏 YouTube 底栏 Shorts 按钮
 blockImmersive = switch,false,tag=隐藏选段按钮,desc=隐藏 YouTube Music 底栏选段按钮
-captionLang = select,zh-Hans,zh-Hant,ja,ko,en,off,tag=字幕翻译语言,desc=选择字幕翻译目标语言
 lyricLang = select,zh-Hans,zh-Hant,ja,ko,en,off,tag=歌词翻译语言,desc=选择歌词翻译目标语言
 debug = switch,false,tag=调试日志,desc=只记录端点、处理类型和数量
 
@@ -24,10 +23,10 @@ AND,((PROTOCOL,QUIC),(DOMAIN,youtubei.googleapis.com)),REJECT
 AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,googlevideo.com)),REJECT
 
 [Script]
-http-request ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppRequest.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Request,argument=[{captionLang},{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
-http-request ^https:\/\/[^\/]+\.googlevideo\.com\/initplayback(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppRequest.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Stream,argument=[{captionLang},{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
-http-response ^https:\/\/(www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(player|browse|next|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch)(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAPI.js?v=2.1.1,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate API,argument=[{enabled},{web_enhance},{app_enhance},{blockUpload},{blockShorts},{blockImmersive},{captionLang},{lyricLang},{debug}],enable={enabled}
-http-response ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(config|log_event)(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppOnesie.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Keys,argument=[{captionLang},{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
+http-request ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppRequest.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Request,argument=[{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
+http-request ^https:\/\/[^\/]+\.googlevideo\.com\/initplayback(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppRequest.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Stream,argument=[{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
+http-response ^https:\/\/(www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(player|browse|next|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch)(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAPI.js?v=2.1.2,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate API,argument=[{enabled},{web_enhance},{app_enhance},{blockUpload},{blockShorts},{blockImmersive},{lyricLang},{debug}],enable={enabled}
+http-response ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(config|log_event)(\/|\?|$) script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateAppOnesie.js?v=2.1.0,requires-body=true,binary-body-mode=true,timeout=10,tag=YT Ultimate Music Keys,argument=[{blockUpload},{blockShorts},{blockImmersive}],enable={app_enhance}
 http-response ^https:\/\/((www|m)\.)?youtube\.com\/ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePage.js?v=2.0.0,requires-body=true,timeout=10,tag=YT Ultimate Page,argument=[{enabled},{web_enhance},{debug}],enable={enabled}
 
 [Mitm]

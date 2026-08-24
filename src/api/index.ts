@@ -8,7 +8,6 @@ type Arguments = {
   blockUpload: boolean,
   blockShorts: boolean,
   blockImmersive: boolean,
-  captionLang: string,
   lyricLang: string,
   debug: boolean,
 };
@@ -20,7 +19,6 @@ const DEFAULTS: Arguments = {
   blockUpload: false,
   blockShorts: false,
   blockImmersive: false,
-  captionLang: 'zh-Hans',
   lyricLang: 'zh-Hans',
   debug: false,
 };
@@ -93,7 +91,7 @@ async function run(): Promise<Record<string, unknown>> {
   if (isJson(header('content-type'), payload.bytes, payload.text)) {
     const raw = payload.text ?? new TextDecoder().decode(payload.bytes);
     if (!raw) return {};
-    const result = cleanYouTubeJson(endpoint.split('/').pop() ?? endpoint, raw, argument.captionLang);
+    const result = cleanYouTubeJson(endpoint.split('/').pop() ?? endpoint, raw);
     if (argument.debug) console.log(`[YouTube Ultimate][${endpoint}] type=json removed=${result.removed}`);
     return result.changed ? { body: payload.binary ? new TextEncoder().encode(result.body) : result.body } : {};
   }

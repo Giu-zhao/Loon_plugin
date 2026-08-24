@@ -14,7 +14,7 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 
 - 清理 player、browse、next、search、Shorts、guide、settings 和 get_watch
   响应中的明确广告或升级入口；
-- 可启用画中画、后台播放、YouTube App 与 Safari 自动字幕中文翻译，以及 YouTube Music 歌词翻译；
+- 可启用画中画、后台播放和 YouTube Music 歌词翻译；字幕完全保留 YouTube 原生行为，由用户手动选择；
 - 处理 YouTube Music 的加密 `initplayback` 广告流；
 - 三个独立开关可隐藏上传、Shorts 和 YouTube Music 选段按钮；
 - Safari 继续清理 JSON/HTML 广告字段、页面广告容器并点击可用的跳过按钮；
@@ -32,7 +32,6 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 | `blockUpload` | `false` | 隐藏上传按钮 |
 | `blockShorts` | `false` | 隐藏 Shorts 按钮和 Shorts shelf |
 | `blockImmersive` | `false` | 隐藏 YouTube Music 选段按钮 |
-| `captionLang` | `zh-Hans` | 字幕目标语言；可选 `zh-Hans`、`zh-Hant`、`ja`、`ko`、`en`、`off` |
 | `lyricLang` | `zh-Hans` | 歌词目标语言；可选值同上 |
 | `debug` | `false` | 仅记录端点、处理类型、计数及成功/失败状态 |
 

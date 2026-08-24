@@ -12,7 +12,7 @@ test("plugin has a new canonical URL so Loon does not reuse the legacy resource 
   assert.notEqual(path.basename(pluginPath), "YouTubeSafariAdBlock.lpx");
 });
 
-test("plugin declares the supported systems and nine approved defaults", async () => {
+test("plugin declares the supported systems and eight approved defaults", async () => {
   const plugin = await readFile(pluginPath, "utf8");
 
   assert.match(plugin, /^#!name\s*=\s*YouTube Ultimate$/m);
@@ -26,10 +26,10 @@ test("plugin declares the supported systems and nine approved defaults", async (
   assert.match(plugin, /^blockUpload\s*=\s*switch,false,/m);
   assert.match(plugin, /^blockShorts\s*=\s*switch,false,/m);
   assert.match(plugin, /^blockImmersive\s*=\s*switch,false,/m);
-  assert.match(plugin, /^captionLang\s*=\s*select,zh-Hans,zh-Hant,ja,ko,en,off,/m);
+  assert.doesNotMatch(plugin, /^captionLang\s*=/m);
   assert.match(plugin, /^lyricLang\s*=\s*select,zh-Hans,zh-Hant,ja,ko,en,off,/m);
   assert.match(plugin, /^debug\s*=\s*switch,false,/m);
-  assert.equal((plugin.match(/^\w+\s*=\s*(?:switch|select),/gm) || []).length, 9);
+  assert.equal((plugin.match(/^\w+\s*=\s*(?:switch|select),/gm) || []).length, 8);
 });
 
 test("plugin routes each response endpoint exactly once to repository-owned scripts", async () => {
@@ -39,7 +39,7 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
     const escaped = endpoint.replaceAll('/', '\\\/');
     const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(escaped));
     assert.equal(responseLines.length, 1, `${endpoint} must have one response handler`);
-    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.1\.1/);
+    assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.1\.2/);
   }
   assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
   assert.match(plugin, /youtubei\\\/v1\\\/\(config\|log_event\).*YouTubeUltimateAppOnesie\.js\?v=2\.1\.0/);

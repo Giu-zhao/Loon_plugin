@@ -7,24 +7,19 @@ import { Player, BackgroundPlayer } from '../lib/protobuf/response/player_pb'
 import { Setting, SubSetting, SettingItem } from '../lib/protobuf/response/setting_pb'
 import { Watch } from '../lib/protobuf/response/watch_pb'
 import { YouTubeMessage } from './youtube'
-import { $ } from '../lib/env'
-import { translateURL } from '../lib/googleTranslate'
-
-const TRANSLATION_NOTICE = ' & Translated by Google'
 
 export class BrowseMessage extends YouTubeMessage {
   constructor (msgType: any = Browse, name = 'Browse') {
     super(msgType, name)
   }
 
-  async pure (): Promise<YouTubeMessage> {
+  pure (): YouTubeMessage {
     this.iterate(this.message, 'sectionListSupportedRenderers', (obj) => {
       for (let i = obj.sectionListSupportedRenderers.length - 1; i >= 0; i--) {
         this.removeCommonAd(obj.sectionListSupportedRenderers[i])
         this.removeShorts(obj, i)
       }
     })
-    await this.translate()
     return this
   }
 
@@ -48,60 +43,6 @@ export class BrowseMessage extends YouTubeMessage {
     }
   }
 
-  getBrowseId (): string {
-    let browseId = ''
-    this.iterate(this.message?.responseContext, 'key', (obj, stack) => {
-      if (obj.key === 'browse_id') {
-        browseId = obj.value
-        stack.length = 0
-      }
-    })
-    return browseId
-  }
-
-  async translate (): Promise<void> {
-    const target = String(this.argument.lyricLang ?? '').trim()
-    if (this.name !== 'Browse' || !this.getBrowseId().startsWith('MPLYt') || target === 'off') return
-
-    let timed: any
-    let description: any
-    let footer: any
-    this.iterate(this.message, 'timedLyricsContent', (obj, stack) => {
-      timed = obj.timedLyricsContent
-      stack.length = 0
-    })
-    if (!timed) {
-      this.iterate(this.message, 'musicDescriptionShelfRenderer', (obj, stack) => {
-        description = obj.musicDescriptionShelfRenderer?.description?.runs?.[0]
-        footer = obj.musicDescriptionShelfRenderer?.footer?.runs?.[0]
-        stack.length = 0
-      })
-    }
-
-    const originalLines = timed?.runs?.map((run) => run.text) ?? description?.text?.split(/\r?\n/)
-    if (!Array.isArray(originalLines) || originalLines.length === 0 || originalLines.some((line) => typeof line !== 'string')) return
-
-    try {
-      const response = await $.fetch({ method: 'GET', url: translateURL(originalLines.join('\n'), target) })
-      if (response.status !== 200 || typeof response.body !== 'string') return
-      const data = JSON.parse(response.body)
-      const detected = String(data?.[2] ?? '').toLowerCase()
-      if (detected.startsWith(target.split('-')[0].toLowerCase())) return
-      const translated = data?.[0]?.map((item) => typeof item?.[0] === 'string' ? item[0] : '')
-      if (!Array.isArray(translated) || translated.length !== originalLines.length || translated.some((line) => !line)) return
-
-      if (timed) {
-        timed.runs.forEach((run, index) => { run.text = `${run.text}\n${translated[index]}` })
-        timed.footerLabel = `${timed.footerLabel ?? ''}${TRANSLATION_NOTICE}`
-      } else {
-        description.text = originalLines.map((line, index) => `${line}\n${translated[index]}`).join('\r\n')
-        if (footer) footer.text = `${footer.text ?? ''}${TRANSLATION_NOTICE}`
-      }
-      this.needProcess = true
-    } catch (_) {
-      // Translation is optional. Preserve the original response on every failure.
-    }
-  }
 }
 
 export class NextMessage extends BrowseMessage {

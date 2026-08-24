@@ -14,7 +14,7 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 
 - 清理 player、browse、next、search、Shorts、guide、settings 和 get_watch
   响应中的明确广告或升级入口；
-- 可启用画中画、后台播放和 YouTube Music 歌词翻译；字幕完全保留 YouTube 原生行为，由用户手动选择；
+- 可启用画中画和后台播放；字幕与歌词完全保留 YouTube 原生行为，由用户手动选择；
 - 处理 YouTube Music 的加密 `initplayback` 广告流；
 - 三个独立开关可隐藏上传、Shorts 和 YouTube Music 选段按钮；
 - Safari 继续清理 JSON/HTML 广告字段、页面广告容器并点击可用的跳过按钮；
@@ -32,17 +32,12 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 | `blockUpload` | `false` | 隐藏上传按钮 |
 | `blockShorts` | `false` | 隐藏 Shorts 按钮和 Shorts shelf |
 | `blockImmersive` | `false` | 隐藏 YouTube Music 选段按钮 |
-| `lyricLang` | `zh-Hans` | 歌词目标语言；可选值同上 |
 | `debug` | `false` | 仅记录端点、处理类型、计数及成功/失败状态 |
 
 ## 隐私说明
 
 脚本不会在日志中写入响应 Body、Cookie、账号标识、字幕或歌词正文、播放 URL
 和观看历史。持久化广告缓存仅包含 Protobuf 字段号和 EML 名称。
-
-当 `lyricLang` 不是 `off` 且打开 YouTube Music 的 `MPLYt` 歌词页时，当前
-歌词正文会发送给 Google Translate 以取得译文。若不希望发送歌词，请把
-`lyricLang` 设为 `off`。
 
 为处理 YouTube Music 的加密广告流，`initplayback` 请求在命中缓存密钥时会重定向
 到 `https://init-stream.maasea.workers.dev/`。该服务可能收到目标播放 URL、查询参数、
@@ -66,8 +61,8 @@ Loon 需要启用 MitM 并在设备上安装、信任证书。插件让 `youtube
 
 macOS 建议验证 Safari 首页、搜索、Shorts、普通视频、字幕和推荐列表。iOS 与
 iPadOS 必须由用户在真实设备上验证 YouTube App 的播放、信息流、搜索、Shorts、
-画中画、锁屏后台、字幕和按钮开关，以及 YouTube Music 的后台播放、普通/逐行
-歌词和 `lyricLang=off`。当前文档不声称 iOS/iPadOS 已实机通过。
+画中画、锁屏后台、字幕和按钮开关，以及 YouTube Music 的后台播放和原生歌词。
+当前文档不声称 iOS/iPadOS 已实机通过。
 
 生产插件只在精确匹配的 `config`、`log_event` 和 `initplayback` 端点加载固定版本的
 Maasea 请求/Onesie 脚本；其他 YouTube API 继续由仓库自有的统一脚本处理。

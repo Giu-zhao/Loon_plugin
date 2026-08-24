@@ -117,7 +117,7 @@ test('dispatcher routes exact endpoint path and ignores query-string endpoint na
   const browse = await runLoonBinaryScript(SCRIPT, {
     bodyBytes: encodeBrowseFixture(),
     requestUrl: 'https://youtubei.googleapis.com/youtubei/v1/browse?player=1',
-    argument: { ...DEFAULT_ARGUMENT, lyricLang: 'off' },
+    argument: { ...DEFAULT_ARGUMENT },
   });
   assert.equal(decodeBrowse(browse.result.body).content.sectionListRenderer.sectionListSupportedRenderers[0].itemSectionRenderer.richItemContent.length, 1);
 

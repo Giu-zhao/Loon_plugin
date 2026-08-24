@@ -8,7 +8,6 @@ type Arguments = {
   blockUpload: boolean,
   blockShorts: boolean,
   blockImmersive: boolean,
-  lyricLang: string,
   debug: boolean,
 };
 
@@ -19,7 +18,6 @@ const DEFAULTS: Arguments = {
   blockUpload: false,
   blockShorts: false,
   blockImmersive: false,
-  lyricLang: 'zh-Hans',
   debug: false,
 };
 

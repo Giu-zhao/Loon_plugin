@@ -10,7 +10,7 @@ async function run(endpoint, bodyBytes, argument = {}) {
   return runLoonBinaryScript('YouTubeUltimateAPI.js', {
     requestUrl: `https://youtubei.googleapis.com/youtubei/v1/${endpoint}`,
     bodyBytes,
-    argument: { ...DEFAULT_ARGUMENT, lyricLang: 'off', ...argument },
+    argument: { ...DEFAULT_ARGUMENT, ...argument },
   });
 }
 

@@ -13,7 +13,6 @@ export const DEFAULT_ARGUMENT = Object.freeze({
   blockShorts: false,
   blockImmersive: false,
   captionLang: 'zh-Hans',
-  lyricLang: 'zh-Hans',
   debug: false,
 });
 

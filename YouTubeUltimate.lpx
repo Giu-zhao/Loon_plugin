@@ -1,0 +1,34 @@
+#!name=YouTube Ultimate - Safari
+#!desc=Loon macOS 与 Safari 专用。净化 YouTube 播放、首页、搜索、Shorts 和推荐接口中的广告数据，并清理网页残留广告；不解密或阻断 googlevideo 视频流。
+#!author=Giu-zhao
+#!homepage=https://github.com/Giu-zhao/Loon_plugin
+#!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/youtube(4).png
+#!system=macOS
+#!tag=YouTube,Safari,AdBlock
+#!type=normal
+
+[Argument]
+enabled = switch,true,tag=总开关,desc=启用 YouTube 网页广告净化
+page_enhance = switch,true,tag=网页增强,desc=清理页面广告容器并点击可跳过广告按钮
+debug = switch,false,tag=调试日志,desc=只记录端点和清理数量，不记录响应内容
+
+[Rule]
+# 仅让 YouTube 页面与 JSON API 的 QUIC 回退到 TCP/TLS，便于 MitM 响应脚本工作。
+# 不处理 googlevideo.com，视频媒体流保持原样。
+AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,youtube.com)),REJECT
+AND,((PROTOCOL,QUIC),(DOMAIN,youtubei.googleapis.com)),REJECT
+
+[Rewrite]
+# 只拒绝 YouTube 自身明确的广告统计与页面广告端点，不做跨站广告域名封锁。
+^https:\/\/(?:www\.|s\.)?youtube\.com\/api\/stats\/ads(?:[\/?].*)?$ reject-200
+^https:\/\/(?:www\.|s\.)?youtube\.com\/pagead(?:[\/?].*)?$ reject-200
+^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext.*$ reject-200
+
+[Script]
+http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/player(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePlayer.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Player,argument=[{enabled},{debug}],enable={enabled}
+http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(browse|search|guide)(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateBrowse.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Browse,argument=[{enabled},{debug}],enable={enabled}
+http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(next|get_watch)(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateNext.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Next,argument=[{enabled},{debug}],enable={enabled}
+http-response ^https:\/\/(?:(?:www|m)\.)?youtube\.com\/(?:$|\?.*|watch(?:\?.*)?|results(?:\?.*)?|feed(?:\/.*)?|shorts(?:\/.*)?|playlist(?:\?.*)?|channel\/.*|@.*|hashtag\/.*|gaming.*|live.*)$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePage.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Page,argument=[{enabled},{page_enhance},{debug}],enable={enabled}
+
+[Mitm]
+hostname = youtube.com, www.youtube.com, m.youtube.com, s.youtube.com, youtubei.googleapis.com

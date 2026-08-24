@@ -5,7 +5,12 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const pluginPath = path.join(root, "YouTubeSafariAdBlock.lpx");
+const pluginPath = path.join(root, "YouTubeUltimate.lpx");
+
+test("plugin has a new canonical URL so Loon does not reuse the legacy resource cache", async () => {
+  await access(pluginPath);
+  assert.notEqual(path.basename(pluginPath), "YouTubeSafariAdBlock.lpx");
+});
 
 test("plugin replaces the old Safari-Style entry with YouTube Ultimate metadata", async () => {
   const plugin = await readFile(pluginPath, "utf8");

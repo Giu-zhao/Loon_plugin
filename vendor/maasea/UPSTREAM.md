@@ -6,4 +6,6 @@
 - YouTubeUltimateAppRequest.js SHA-256 3ecca15e06e76a31720092c581180f648ef2c45e494644941ba985c878efbb26
 - YouTubeUltimateAppOnesie.js SHA-256 f98483d5f5017514f82502253c0db5ce2d4ffb7839887aa2cadc22666f5a7f12
 - Local modifications will be built in YouTubeUltimateAPI.js: Loon argument defaults, JSON/Protobuf dispatch, preserving Shorts unless requested, button switches, fail-open, private debug logging, restored lyrics
-- No runtime URL points to Maasea or kelee.one
+- The pinned request artifact contains the Worker URL https://init-stream.maasea.workers.dev/ and may pass cached `ck` values, target URLs/query data, and request arguments when redirecting `initplayback`; this is disclosed as upstream behavior for audit purposes.
+- The pinned artifact is an audit-only upstream baseline and MUST NOT be referenced by the production plugin.
+- The final production request handler must be locally built and audited; tests must reject Maasea and kelee.one runtime URLs.

@@ -1,69 +1,63 @@
 import { Message, WireType } from '@bufbuild/protobuf'
 import { $ } from '../lib/env'
 
+const CACHE_KEY = 'YTUL.App.AdvertiseInfo.v2'
+
 export abstract class YouTubeMessage {
   name: string
-  needProcess: boolean
-  needSave: boolean
+  needProcess = false
+  needSave = false
   message: any
-  version: string = '1.0'
+  version = '2.0'
   whiteNo: number[] = []
   blackNo: number[] = []
   whiteEml: string[] = []
-  blackEml: string[] = ['inline_injection_entrypoint_layout.eml']
+  blackEml: string[] = []
   msgType: Message<any>
   argument: Record<string, any>
-  decoder = new TextDecoder('utf-8', {
-    fatal: false,
-    ignoreBOM: true
-  })
+  decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 
   protected constructor (msgType: Message<any>, name: string) {
     this.name = name
     this.msgType = msgType
     this.argument = this.decodeArgument()
     $.isDebug = Boolean(this.argument.debug)
-    $.debug(this.name)
+    $.debug(`[YouTube Ultimate][${this.name}] start`)
 
-    const storedData: Record<string, any> = $.getJSON('YouTubeAdvertiseInfo')
-    $.debug(`currentVersion:  ${this.version}`)
-    $.debug(`storedVersion:  ${storedData.version as string}`)
+    const storedData = $.getJSON(CACHE_KEY) as Record<string, any>
     if (storedData?.version === this.version) {
-      Object.assign(this, storedData)
+      for (const key of ['whiteNo', 'blackNo']) {
+        if (Array.isArray(storedData[key]) && storedData[key].every(Number.isInteger)) this[key] = storedData[key]
+      }
+      for (const key of ['whiteEml', 'blackEml']) {
+        if (Array.isArray(storedData[key]) && storedData[key].every((item) => typeof item === 'string')) this[key] = storedData[key]
+      }
     }
   }
 
   decodeArgument (): Record<string, any> {
-    const args = {
-      lyricLang: 'zh-Hans',
+    return $.decodeParams({
+      enabled: true,
+      web_enhance: true,
+      app_enhance: true,
+      blockUpload: false,
+      blockShorts: false,
+      blockImmersive: false,
       captionLang: 'zh-Hans',
-      blockUpload: true,
-      blockImmersive: true,
+      lyricLang: 'zh-Hans',
       debug: false
-    }
-    return $.decodeParams(args)
+    })
   }
 
-  fromBinary (binaryBody: Uint8Array | undefined | string): YouTubeMessage {
-    if (binaryBody instanceof Uint8Array) {
-      this.message = this.msgType.fromBinary(binaryBody)
-      $.debug(`raw: ${Math.floor(binaryBody.length / 1024)} kb`)
-      return this
-    }
-    $.log('YouTube can not get binaryBody')
-    $.exit()
+  fromBinary (binaryBody: Uint8Array): YouTubeMessage {
+    this.message = this.msgType.fromBinary(binaryBody)
     return this
   }
 
   abstract pure (): Promise<YouTubeMessage> | YouTubeMessage
 
   async modify (): Promise<YouTubeMessage> {
-    const pureMessage = this.pure()
-    if (pureMessage instanceof Promise) {
-      return await pureMessage
-    } else {
-      return pureMessage
-    }
+    return await this.pure()
   }
 
   toBinary (): Uint8Array {
@@ -71,116 +65,84 @@ export abstract class YouTubeMessage {
   }
 
   listUnknownFields (msg: any): ReadonlyArray<{ no: number, wireType: WireType, data: Uint8Array }> {
-    if (msg instanceof Message) {
-      return msg.getType().runtime.bin.listUnknownFields(msg)
-    }
-    return []
+    return msg instanceof Message ? msg.getType().runtime.bin.listUnknownFields(msg) : []
   }
 
   save (): void {
-    if (this.needSave) {
-      $.debug('Update Config')
-      const YouTubeAdvertiseInfo = {
-        version: this.version,
-        whiteNo: this.whiteNo,
-        blackNo: this.blackNo,
-        whiteEml: this.whiteEml,
-        blackEml: this.blackEml
-      }
-      $.debug(YouTubeAdvertiseInfo)
-      $.setJSON(YouTubeAdvertiseInfo, 'YouTubeAdvertiseInfo')
-    }
+    if (!this.needSave) return
+    $.setJSON({
+      version: this.version,
+      whiteNo: this.whiteNo.filter(Number.isInteger),
+      blackNo: this.blackNo.filter(Number.isInteger),
+      whiteEml: this.whiteEml.filter((item) => typeof item === 'string'),
+      blackEml: this.blackEml.filter((item) => typeof item === 'string')
+    }, CACHE_KEY)
   }
 
-  done (): void {
+  result (): { changed: boolean, bodyBytes?: Uint8Array } {
     this.save()
-    if (this.needProcess) {
-      $.timeStart('toBinary')
-      const bodyBytes = this.toBinary()
-      $.timeEnd('toBinary')
-      $.debug(`modify: ${Math.floor(bodyBytes.length / 1024)} kb`)
-      $.done({ bodyBytes })
-    }
-    $.debug('use $done({})')
-    $.exit()
+    return this.needProcess ? { changed: true, bodyBytes: this.toBinary() } : { changed: false }
   }
 
   iterate (obj: any = {}, target: string, call: Function): any {
-    const stack: any[] = (typeof obj === 'object') ? [obj] : []
+    const stack: any[] = obj && typeof obj === 'object' ? [obj] : []
     while (stack.length) {
       const item = stack.pop()
-      const keys = Object.keys(item)
-
-      for (const key of keys) {
-        if (key === target) {
-          call(item, stack)
-        } else if (typeof item[key] === 'object') {
-          stack.push(item[key])
-        }
+      for (const key of Object.keys(item)) {
+        if (key === target) call(item, stack)
+        else if (item[key] && typeof item[key] === 'object') stack.push(item[key])
       }
     }
   }
 
-  isAdvertise (o: Message<any>): boolean {
-    const filed = this.listUnknownFields(o)[0]
-    return filed ? this.handleFieldNo(filed) : this.handleFieldEml(o)
+  isAdvertise (message: Message<any>): boolean {
+    const fields = this.listUnknownFields(message)
+    if (fields.length) return fields.some((field) => this.handleFieldNo(field))
+    return this.handleFieldEml(message)
   }
 
-  handleFieldNo (field): boolean {
-    const no = field.no
-    // 增加白名单直接跳过用于提升性能
-    if (this.whiteNo.includes(no)) {
-      return false
-    } else if (this.blackNo.includes(no)) {
-      return true
-    }
-    const adFlag = this.checkBufferIsAd(field)
-    adFlag ? this.blackNo.push(no) : this.whiteNo.push(no)
+  handleFieldNo (field: { no: number, data: Uint8Array }): boolean {
+    if (this.whiteNo.includes(field.no)) return false
+    if (this.blackNo.includes(field.no)) return true
+    const isAd = this.checkBufferIsAd(field)
+    ;(isAd ? this.blackNo : this.whiteNo).push(field.no)
     this.needSave = true
-    return adFlag
+    return isAd
   }
 
-  handleFieldEml (field): boolean {
-    let adFlag = false
-    let eml = ''
+  handleFieldEml (field: any): boolean {
+    let isAd = false
     this.iterate(field, 'renderInfo', (obj, stack) => {
-      eml = obj.renderInfo.layoutRender.eml.split('|')[0]
-      if (this.whiteEml.includes(eml)) {
-        adFlag = false
-      } else if (this.blackEml.includes(eml) || /shorts(?!_pivot_item)/.test(eml)) {
-        adFlag = true
-      } else {
+      const eml = obj.renderInfo?.layoutRender?.eml?.split('|')[0] ?? ''
+      if (!eml) return
+      if (this.whiteEml.includes(eml)) isAd = false
+      else if (this.blackEml.includes(eml)) isAd = true
+      else {
         const videoContent = obj?.videoInfo?.videoContext?.videoContent
-        if (videoContent) {
-          adFlag = this.checkUnknownFiled(videoContent)
-          adFlag ? this.blackEml.push(eml) : this.whiteEml.push(eml)
-          this.needSave = true
-        }
+        isAd = this.checkUnknownFiled(videoContent)
+        ;(isAd ? this.blackEml : this.whiteEml).push(eml)
+        this.needSave = true
       }
       stack.length = 0
     })
-    return adFlag
+    return isAd
   }
 
-  // 包含 pagead 字符则判定为广告
-  checkBufferIsAd (filed): boolean {
-    if (!filed || filed.data.length < 1000) return false
-    const rawText = this.decoder.decode(filed.data)
-    return rawText.includes('pagead')
+  checkBufferIsAd (field: { data: Uint8Array } | undefined): boolean {
+    return Boolean(field && field.data.length >= 1000 && this.decoder.decode(field.data).includes('pagead'))
   }
 
-  checkUnknownFiled (unknown): boolean {
-    if (!unknown) return false
-    const unknownFields = this.listUnknownFields(unknown)
-    return unknownFields?.some(field => this.checkBufferIsAd(field)) ?? false
+  checkUnknownFiled (unknown: any): boolean {
+    return this.listUnknownFields(unknown).some((field) => this.checkBufferIsAd(field))
   }
 
-  isShorts (field): boolean {
-    let flag = false
+  isShorts (field: any): boolean {
+    if (field?.richSectionContent?.reelShelfRenderer) return true
+    let found = false
     this.iterate(field, 'eml', (obj, stack) => {
-      flag = /shorts(?!_pivot_item)/.test(obj.eml)
+      found = /shorts(?!_pivot_item)/.test(obj.eml ?? '')
       stack.length = 0
     })
-    return flag
+    return found
   }
 }

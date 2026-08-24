@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import { Browse } from '../lib/protobuf/response/browse_pb'
 import { Next } from '../lib/protobuf/response/next_pb'
 import { Search } from '../lib/protobuf/response/search_pb'
@@ -8,45 +6,44 @@ import { Guide } from '../lib/protobuf/response/guide_pb'
 import { Player, BackgroundPlayer, TranslationLanguage, CaptionTrack } from '../lib/protobuf/response/player_pb'
 import { Setting, SubSetting, SettingItem } from '../lib/protobuf/response/setting_pb'
 import { Watch } from '../lib/protobuf/response/watch_pb'
-import { Entity } from '../lib/protobuf/response/frameworkUpdate_pb'
-
 import { YouTubeMessage } from './youtube'
 import { $ } from '../lib/env'
 import { translateURL } from '../lib/googleTranslate'
-import { protoBase64 } from '@bufbuild/protobuf'
+
+const TRANSLATION_NOTICE = ' & Translated by Google'
 
 export class BrowseMessage extends YouTubeMessage {
-  constructor (msgType: any = Browse, name: string = 'Browse') {
+  constructor (msgType: any = Browse, name = 'Browse') {
     super(msgType, name)
   }
 
   async pure (): Promise<YouTubeMessage> {
     this.iterate(this.message, 'sectionListSupportedRenderers', (obj) => {
       for (let i = obj.sectionListSupportedRenderers.length - 1; i >= 0; i--) {
-        this.removeCommonAD(obj, i)
+        this.removeCommonAd(obj.sectionListSupportedRenderers[i])
         this.removeShorts(obj, i)
       }
     })
-    // this.removeFrameworkUpdateAd()
     await this.translate()
     return this
   }
 
-  removeCommonAD (obj: any, index: number): void {
-    const content = obj.sectionListSupportedRenderers[index]
-    const richItemContent = content?.itemSectionRenderer?.richItemContent
-    for (let j = richItemContent?.length - 1; j >= 0; j--) {
-      if (this.isAdvertise(richItemContent[j])) {
-        richItemContent.splice(j, 1)
+  removeCommonAd (content: any): void {
+    const richItems = content?.itemSectionRenderer?.richItemContent
+    if (!Array.isArray(richItems)) return
+    for (let index = richItems.length - 1; index >= 0; index--) {
+      if (this.isAdvertise(richItems[index])) {
+        richItems.splice(index, 1)
         this.needProcess = true
       }
     }
   }
 
-  removeShorts (obj: any, index: number): void {
-    const shelfRenderer = obj.sectionListSupportedRenderers[index]?.shelfRenderer
-    if (this.isShorts(shelfRenderer)) {
-      obj.sectionListSupportedRenderers.splice(index, 1)
+  removeShorts (container: any, index: number): void {
+    if (!this.argument.blockShorts) return
+    const shelf = container.sectionListSupportedRenderers[index]?.shelfRenderer
+    if (this.isShorts(shelf)) {
+      container.sectionListSupportedRenderers.splice(index, 1)
       this.needProcess = true
     }
   }
@@ -63,214 +60,167 @@ export class BrowseMessage extends YouTubeMessage {
   }
 
   async translate (): Promise<void> {
-    const lyricTargetLang = this.argument.lyricLang?.trim()
-    if (!(this.name === 'Browse' && this.getBrowseId().startsWith('MPLYt')) || lyricTargetLang === 'off') return
-    let lyric = ''
-    let tempObj: any
-    let flag = false
+    const target = String(this.argument.lyricLang ?? '').trim()
+    if (this.name !== 'Browse' || !this.getBrowseId().startsWith('MPLYt') || target === 'off') return
+
+    let timed: any
+    let description: any
+    let footer: any
     this.iterate(this.message, 'timedLyricsContent', (obj, stack) => {
-      tempObj = obj.timedLyricsContent
-      lyric = obj.timedLyricsContent.runs.map((item) => item.text).join('\n')
-      flag = true
+      timed = obj.timedLyricsContent
       stack.length = 0
     })
-    if (!flag) {
-      this.iterate(this.message, 'description', (obj, stack) => {
-        tempObj = obj.description.runs[0]
-        lyric = obj.description.runs[0].text
+    if (!timed) {
+      this.iterate(this.message, 'musicDescriptionShelfRenderer', (obj, stack) => {
+        description = obj.musicDescriptionShelfRenderer?.description?.runs?.[0]
+        footer = obj.musicDescriptionShelfRenderer?.footer?.runs?.[0]
         stack.length = 0
-        flag = true
       })
     }
-    if (!flag) return
 
-    const origin = lyricTargetLang.split('-')[0]
-    const url = translateURL(lyric, lyricTargetLang)
-    const resp = await $.fetch({
-      method: 'GET',
-      url
-    })
-    if (resp.status === 200 && resp.body) {
-      const data = JSON.parse(resp.body)
-      const tips = ' & Translated by Google'
-      const isOrigin = data[2].includes(origin)
+    const originalLines = timed?.runs?.map((run) => run.text) ?? description?.text?.split(/\r?\n/)
+    if (!Array.isArray(originalLines) || originalLines.length === 0 || originalLines.some((line) => typeof line !== 'string')) return
 
-      if (tempObj.text) {
-        tempObj.text = data[0].map((item) => isOrigin ? item[0] : item[1] + item[0] || '').join('\r\n')
-        this.iterate(this.message, 'footer', (ob, stack) => {
-          ob.footer.runs[0].text += tips
-          stack.length = 0
-        })
+    try {
+      const response = await $.fetch({ method: 'GET', url: translateURL(originalLines.join('\n'), target) })
+      if (response.status !== 200 || typeof response.body !== 'string') return
+      const data = JSON.parse(response.body)
+      const detected = String(data?.[2] ?? '').toLowerCase()
+      if (detected.startsWith(target.split('-')[0].toLowerCase())) return
+      const translated = data?.[0]?.map((item) => typeof item?.[0] === 'string' ? item[0] : '')
+      if (!Array.isArray(translated) || translated.length !== originalLines.length || translated.some((line) => !line)) return
+
+      if (timed) {
+        timed.runs.forEach((run, index) => { run.text = `${run.text}\n${translated[index]}` })
+        timed.footerLabel = `${timed.footerLabel ?? ''}${TRANSLATION_NOTICE}`
       } else {
-        if (tempObj.runs.length <= data[0].length) {
-          tempObj.runs.forEach((item, i) => {
-            item.text = isOrigin ? data[0][i][0] : item.text + `\n${data[0][i][0] as string}`
-          })
-          tempObj.footerLabel += tips
-        }
+        description.text = originalLines.map((line, index) => `${line}\n${translated[index]}`).join('\r\n')
+        if (footer) footer.text = `${footer.text ?? ''}${TRANSLATION_NOTICE}`
       }
       this.needProcess = true
-    }
-  }
-
-  removeFrameworkUpdateAd (): void {
-    const mutations = this.message?.frameworkUpdateTransport?.entityBatchUpdate?.mutations
-    if (!mutations) return
-
-    for (let j = mutations.length - 1; j >= 0; j--) {
-      const mutation = mutations[j]
-      const entity = Entity.fromBinary(protoBase64.dec(decodeURIComponent(mutation.entityKey)))
-      let adFlag = this.blackEml.includes(entity.name)
-      if (!adFlag && this.checkUnknownFiled(mutation?.payload)) {
-        adFlag = true
-        this.blackEml.push(entity.name)
-        this.needSave = true
-      }
-      if (adFlag) {
-        mutations.splice(j, 1)
-        this.needProcess = true
-      }
+    } catch (_) {
+      // Translation is optional. Preserve the original response on every failure.
     }
   }
 }
 
 export class NextMessage extends BrowseMessage {
-  constructor (msgType: any = Next, name: string = 'Next') {
+  constructor (msgType: any = Next, name = 'Next') {
+    super(msgType, name)
+  }
+}
+
+export class SearchMessage extends BrowseMessage {
+  constructor (msgType: any = Search, name = 'Search') {
     super(msgType, name)
   }
 }
 
 export class PlayerMessage extends YouTubeMessage {
-  constructor (msgType: any = Player, name: string = 'Player') {
+  constructor (msgType: any = Player, name = 'Player') {
     super(msgType, name)
   }
 
   pure (): YouTubeMessage {
-    // 去除广告
     if (this.message.adPlacements?.length) {
       this.message.adPlacements.length = 0
+      this.needProcess = true
     }
     if (this.message.adSlots?.length) {
       this.message.adSlots.length = 0
+      this.needProcess = true
     }
-    // 去除广告追踪
-    delete this.message?.playbackTracking?.pageadViewthroughconversion
-    // 增加 premium 特性
-    this.addPlayAbility()
+    if (this.message.playbackTracking?.pageadViewthroughconversion) {
+      delete this.message.playbackTracking.pageadViewthroughconversion
+      this.needProcess = true
+    }
+    this.enableMiniPlayer()
+    this.enableBackgroundPlayer()
     this.addTranslateCaption()
-    this.needProcess = true
     return this
   }
 
-  addPlayAbility (): void {
-    // 开启画中画
-    const miniPlayerRender = this.message?.playabilityStatus?.miniPlayer?.miniPlayerRender
-    if (typeof miniPlayerRender === 'object') {
-      miniPlayerRender.active = true
+  enableMiniPlayer (): void {
+    const renderer = this.message?.playabilityStatus?.miniPlayer?.miniPlayerRender
+    if (renderer && renderer.active !== true) {
+      renderer.active = true
+      this.needProcess = true
     }
-    // 开启后台播放
-    if (typeof this.message.playabilityStatus === 'object') {
+  }
+
+  enableBackgroundPlayer (): void {
+    if (!this.message?.playabilityStatus) return
+    const renderer = this.message.playabilityStatus.backgroundPlayer?.backgroundPlayerRender
+    if (renderer) {
+      if (renderer.active !== true) {
+        renderer.active = true
+        this.needProcess = true
+      }
+    } else {
       this.message.playabilityStatus.backgroundPlayer = new BackgroundPlayer({
-        backgroundPlayerRender: {
-          active: true
-        }
+        backgroundPlayerRender: { active: true }
       })
+      this.needProcess = true
     }
   }
 
   addTranslateCaption (): void {
-    const captionTargetLang = this.argument.captionLang as string
-    if (captionTargetLang === 'off') return
-
+    const target = String(this.argument.captionLang ?? '')
+    if (!target || target === 'off') return
     this.iterate(this.message, 'captionTracks', (obj, stack) => {
-      const captionTracks = obj.captionTracks
-      const audioTracks = obj.audioTracks
-
-      // 添加默认翻译语言
-      if (Array.isArray(captionTracks)) {
-        const captionPriority = {
-          [captionTargetLang]: 2,
-          en: 1
-        }
-        let priority = -1
-        let targetIndex = 0
-
-        for (let i = 0; i < captionTracks.length; i++) {
-          const captionTrack = captionTracks[i]
-          const currentPriority = captionPriority[captionTrack.languageCode]
-          if (currentPriority && (currentPriority > priority)) {
-            priority = currentPriority
-            targetIndex = i
-          }
-          captionTrack.isTranslatable = true
-        }
-
-        if (priority !== 2) {
-          const newCaption = new CaptionTrack({
-            baseUrl: captionTracks[targetIndex].baseUrl + `&tlang=${captionTargetLang}`,
-            name: { runs: [{ text: `@Enhance (${captionTargetLang})` }] },
-            vssId: `.${captionTargetLang}`,
-            languageCode: captionTargetLang
-          })
-          captionTracks.push(newCaption)
-        }
-
-        // 开启默认字幕
-        if (Array.isArray(audioTracks)) {
-          const trackIndex = priority === 2 ? targetIndex : captionTracks.length - 1
-          for (const audioTrack of audioTracks) {
-            if (!audioTrack.captionTrackIndices?.includes(trackIndex)) {
-              audioTrack.captionTrackIndices.push(trackIndex)
-            }
-            audioTrack.defaultCaptionTrackIndex = trackIndex
-            audioTrack.captionsInitialState = 3
-          }
-        }
+      const tracks = obj.captionTracks
+      if (!Array.isArray(tracks) || tracks.length === 0) {
+        stack.length = 0
+        return
       }
-
-      // 重建自动翻译
-      const languages = {
-        de: 'Deutsch',
-        ru: 'Русский',
-        fr: 'Français',
-        fil: 'Filipino',
-        ko: '한국어',
-        ja: '日本語',
-        en: 'English',
-        vi: 'Tiếng Việt',
-        'zh-Hant': '中文（繁體）',
-        'zh-Hans': '中文（简体）',
-        und: '@VirgilClyne'
-      }
-      obj.translationLanguages =
-        Object.entries(languages).map(([k, v]) => new TranslationLanguage({
-          languageCode: k,
-          languageName: { runs: [{ text: v }] }
+      for (const track of tracks) track.isTranslatable = true
+      let targetIndex = tracks.findIndex((track) => track.languageCode === target)
+      if (targetIndex < 0) {
+        let sourceIndex = tracks.findIndex((track) => track.languageCode === 'en')
+        if (sourceIndex < 0) sourceIndex = 0
+        const source = tracks[sourceIndex]
+        const separator = source.baseUrl.includes('?') ? '&' : '?'
+        tracks.push(new CaptionTrack({
+          baseUrl: `${source.baseUrl}${separator}tlang=${encodeURIComponent(target)}`,
+          name: { runs: [{ text: `@Enhance (${target})` }] },
+          vssId: `.${target}`,
+          languageCode: target
         }))
+        targetIndex = tracks.length - 1
+      }
+      if (Array.isArray(obj.audioTracks)) {
+        for (const audioTrack of obj.audioTracks) {
+          if (!audioTrack.captionTrackIndices.includes(targetIndex)) audioTrack.captionTrackIndices.push(targetIndex)
+          audioTrack.defaultCaptionTrackIndex = targetIndex
+          audioTrack.captionsInitialState = 3
+        }
+      }
+      const languages = {
+        de: 'Deutsch', ru: 'Русский', fr: 'Français', fil: 'Filipino', ko: '한국어', ja: '日本語',
+        en: 'English', vi: 'Tiếng Việt', 'zh-Hant': '中文（繁體）', 'zh-Hans': '中文（简体）'
+      }
+      obj.translationLanguages = Object.entries(languages).map(([languageCode, text]) => new TranslationLanguage({
+        languageCode,
+        languageName: { runs: [{ text }] }
+      }))
+      this.needProcess = true
       stack.length = 0
     })
   }
 }
 
-export class SearchMessage extends BrowseMessage {
-  constructor (msgType: any = Search, name: string = 'Search') {
-    super(msgType, name)
-  }
-}
-
 export class ShortsMessage extends YouTubeMessage {
-  constructor (msgType: any = Shorts, name: string = 'Shorts') {
+  constructor (msgType: any = Shorts, name = 'Shorts') {
     super(msgType, name)
   }
 
   pure (): YouTubeMessage {
-    const shortsRawLength = this.message.entries?.length
-    if (shortsRawLength) {
-      for (let i = shortsRawLength - 1; i >= 0; i--) {
-        if (!this.message.entries[i].command?.reelWatchEndpoint?.overlay) {
-          this.message.entries.splice(i, 1)
-          this.needProcess = true
-        }
+    const entries = this.message.entries
+    if (!Array.isArray(entries)) return this
+    for (let index = entries.length - 1; index >= 0; index--) {
+      if (!entries[index]?.command?.reelWatchEndpoint?.overlay) {
+        entries.splice(index, 1)
+        this.needProcess = true
       }
     }
     return this
@@ -278,21 +228,20 @@ export class ShortsMessage extends YouTubeMessage {
 }
 
 export class GuideMessage extends YouTubeMessage {
-  constructor (msgType: any = Guide, name: string = 'Guide') {
+  constructor (msgType: any = Guide, name = 'Guide') {
     super(msgType, name)
   }
 
   pure (): YouTubeMessage {
-    const blackList = ['SPunlimited']
-    if (this.argument.blockUpload) blackList.push('FEuploads')
-    if (this.argument.blockImmersive) blackList.push('FEmusic_immersive')
+    const blocked = new Set(['SPunlimited'])
+    if (this.argument.blockUpload) blocked.add('FEuploads')
+    if (this.argument.blockShorts) blocked.add('FEshorts')
+    if (this.argument.blockImmersive) blocked.add('FEmusic_immersive')
     this.iterate(this.message, 'rendererItems', (obj) => {
-      for (let i = obj.rendererItems.length - 1; i >= 0; i--) {
-        const browseId =
-          obj.rendererItems[i]?.iconRender?.browseId ||
-          obj.rendererItems[i]?.labelRender?.browseId
-        if (blackList.includes(browseId)) {
-          obj.rendererItems.splice(i, 1)
+      for (let index = obj.rendererItems.length - 1; index >= 0; index--) {
+        const browseId = obj.rendererItems[index]?.iconRender?.browseId ?? obj.rendererItems[index]?.labelRender?.browseId
+        if (blocked.has(browseId)) {
+          obj.rendererItems.splice(index, 1)
           this.needProcess = true
         }
       }
@@ -302,75 +251,56 @@ export class GuideMessage extends YouTubeMessage {
 }
 
 export class SettingMessage extends YouTubeMessage {
-  constructor (msgType: any = Setting, name: string = 'Setting') {
+  constructor (msgType: any = Setting, name = 'Setting') {
     super(msgType, name)
   }
 
   pure (): YouTubeMessage {
-    // 增加 PIP
     this.iterate(this.message.settingItems, 'categoryId', (obj) => {
-      if (obj.categoryId === 10135) {
-        const PipSettingRender = new SubSetting({
+      if (obj.categoryId !== 10135) return
+      const exists = obj.subSettings?.some((setting) =>
+        setting.settingBooleanRenderer?.enableServiceEndpoint?.setClientSettingEndpoint?.settingData?.clientSettingEnum?.item === 151)
+      if (!exists) {
+        obj.subSettings.push(new SubSetting({
           settingBooleanRenderer: {
             itemId: 0,
-            enableServiceEndpoint: {
-              setClientSettingEndpoint: {
-                settingData: {
-                  clientSettingEnum: { item: 151 },
-                  boolValue: true
-                }
-              }
-            },
-            disableServiceEndpoint: {
-              setClientSettingEndpoint: {
-                settingData: {
-                  clientSettingEnum: { item: 151 },
-                  boolValue: false
-                }
-              }
-            }
+            enableServiceEndpoint: { setClientSettingEndpoint: { settingData: { clientSettingEnum: { item: 151 }, boolValue: true } } },
+            disableServiceEndpoint: { setClientSettingEndpoint: { settingData: { clientSettingEnum: { item: 151 }, boolValue: false } } }
           }
-        })
-        obj.subSettings.push(PipSettingRender)
+        }))
+        this.needProcess = true
       }
     })
-    // 增加后台播放
-    const fakePlayBackgroundSetting = new SettingItem({
-      backgroundPlayBackSettingRenderer: {
-        backgroundPlayback: true,
-        download: true,
-        downloadQualitySelection: true,
-        smartDownload: true,
-        icon: { iconType: 1093 }
-      }
-    })
-    this.message.settingItems.push(fakePlayBackgroundSetting)
-    this.needProcess = true
+    const hasBackground = this.message.settingItems.some((item) => item.backgroundPlayBackSettingRenderer)
+    if (!hasBackground) {
+      this.message.settingItems.push(new SettingItem({
+        backgroundPlayBackSettingRenderer: { backgroundPlayback: true, icon: { iconType: 1093 } }
+      }))
+      this.needProcess = true
+    }
     return this
   }
 }
 
 export class WatchMessage extends YouTubeMessage {
-  player: PlayerMessage
-  next: NextMessage
-
-  constructor (msgType: any = Watch, name: string = 'Watch') {
+  constructor (msgType: any = Watch, name = 'Watch') {
     super(msgType, name)
-    this.player = new PlayerMessage()
-    this.next = new NextMessage()
   }
 
   async pure (): Promise<YouTubeMessage> {
-    for (const msg of this.message.contents) {
-      if (msg.player) {
-        this.player.message = msg.player
-        await this.player.pure()
+    for (const content of this.message.contents ?? []) {
+      if (content.player) {
+        const player = new PlayerMessage()
+        player.message = content.player
+        await player.pure()
+        this.needProcess ||= player.needProcess
       }
-      if (msg.next) {
-        this.next.message = msg.next
-        await this.next.pure()
+      if (content.next) {
+        const next = new NextMessage()
+        next.message = content.next
+        await next.pure()
+        this.needProcess ||= next.needProcess
       }
-      this.needProcess = true
     }
     return this
   }

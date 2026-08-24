@@ -55,8 +55,6 @@ export default abstract class Client {
 
   abstract fetch (request: CFetchRequest): Promise<CFetchResponse>
 
-  abstract done (done: CDone): void
-
   protected createProxy<T extends object, C extends object> (target: T): C {
     return new Proxy(target, {
       get: this.getFn,
@@ -119,14 +117,6 @@ export default abstract class Client {
     } else {
       this.debug(`Timer with label ${label} does not exist.`)
     }
-  }
-
-  exit (): void {
-    $done({})
-  }
-
-  reject (): void {
-    $done()
   }
 
   decodeParams (params: Record<string, any>): Record<string, any> {
@@ -210,24 +200,6 @@ export class SurgeClient extends Client {
         }
       )
     })
-  }
-
-  done (cDone: CDone): void {
-    const realResponse = cDone.response ?? cDone
-    let body: SurgeBody
-    let sgDone: SgDone
-
-    if (realResponse.bodyBytes) {
-      body = realResponse.bodyBytes
-      delete realResponse.bodyBytes
-
-      sgDone = { ...cDone }
-      sgDone.response ? (sgDone.response.body = body) : (sgDone.body = body)
-    } else {
-      sgDone = cDone
-    }
-
-    $done(sgDone)
   }
 
   decodeParams (params: Record<string, any>): Record<string, any> {
@@ -356,34 +328,23 @@ export class QuanXClient extends Client {
     })
   }
 
-  done (cDone: CDone): void {
-    const realResponse = cDone.response ?? cDone
-    const qxDone: QxDone = {}
-    for (const [key, value] of Object.entries(realResponse)) {
-      if (key === 'status') {
-        qxDone.status = `HTTP/1.1 ${value as number}`
-      } else if (key === 'bodyBytes') {
-        qxDone.bodyBytes = QuanXClient.transferBodyBytes(
-          value as Uint8Array,
-          'ArrayBuffer'
-        )
-      } else {
-        qxDone[key] = value
-      }
-    }
-    $done(qxDone)
-  }
 }
 
 export class LoonClient extends SurgeClient {
   decodeParams (params: Record<string, any>): Record<string, any> {
-    if (typeof $argument !== 'undefined') {
-      for (const k of Object.keys(params)) {
-        const customValue = $argument?.[k]
-        if (customValue !== undefined) {
-          params[k] = customValue
-        }
-      }
+    let supplied: Record<string, any> = {}
+    if (typeof $argument === 'string') {
+      const text = $argument.trim()
+      if (text) supplied = text.startsWith('{') ? JSON.parse(text) : Object.fromEntries(new URLSearchParams(text))
+    } else if (typeof $argument === 'object' && $argument) {
+      supplied = $argument
+    }
+    for (const key of Object.keys(params)) {
+      if (supplied[key] === undefined) continue
+      const value = supplied[key]
+      params[key] = typeof value === 'string' && /^(?:true|false)$/i.test(value)
+        ? value.toLowerCase() === 'true'
+        : value
     }
     return params
   }

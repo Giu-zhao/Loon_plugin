@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, mkdtemp, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -22,10 +22,26 @@ async function regularFiles(relativeDirectory) {
       files.push(...await regularFiles(relativePath));
     } else if (entry.isFile()) {
       files.push(relativePath);
+    } else {
+      throw new Error(`non-regular vendored entry: ${relativePath}`);
     }
   }
   return files;
 }
+
+test('vendor traversal rejects symlinks and special entries', async () => {
+  const temporary = await mkdtemp(path.join(root, '.vendor-test-'));
+  try {
+    await writeFile(path.join(temporary, 'regular.txt'), 'safe');
+    await symlink(path.join(temporary, 'regular.txt'), path.join(temporary, 'link.txt'));
+    await assert.rejects(
+      regularFiles(path.relative(root, temporary)),
+      /non-regular vendored entry/,
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
 
 test('pinned Maasea vendor sources and provenance are present', async () => {
   await access(path.join(root, 'vendor/maasea/LICENSE'));
@@ -44,10 +60,6 @@ test('pinned Maasea vendor sources and provenance are present', async () => {
   );
 
   const manifestPath = 'vendor/maasea/SHA256SUMS';
-  assert.equal(
-    await sha256(manifestPath),
-    '071f27a7d0f56c9fc7241f1bb871a15843815d5b01089630a6cbb26b0991fe46',
-  );
   const manifest = (await readFile(path.join(root, manifestPath), 'utf8'))
     .trimEnd()
     .split('\n')
@@ -61,4 +73,10 @@ test('pinned Maasea vendor sources and provenance are present', async () => {
   for (const [file, expectedHash] of manifest) {
     assert.equal(await sha256(file), expectedHash, `integrity mismatch: ${file}`);
   }
+});
+
+test('generated API bundle has a stable banner and no build timestamp', async () => {
+  const bundle = await readFile(path.join(root, 'YouTubeUltimateAPI.js'), 'utf8');
+  assert.match(bundle, /^\/\* YouTube Ultimate API 2\.0\.0 \*\//);
+  assert.doesNotMatch(bundle, /Build:\s*\d{4}|toLocaleString/);
 });

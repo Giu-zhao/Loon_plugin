@@ -1,14 +1,14 @@
 # YouTube Ultimate Loon
 
-面向 **Loon macOS + Safari 网页版 YouTube** 的去广告插件。现有安装地址保持不变，旧的 `YouTube Safari-Style AdBlock` 会原位升级为 `YouTube Ultimate - Safari`。
+面向 **Loon macOS + Safari 网页版 YouTube** 的去广告插件。插件使用新的稳定入口，避免 Loon 继续复用旧版 `YouTube Safari-Style AdBlock` 的资源缓存。
 
 ## 安装地址
 
 ```text
-https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdBlock.lpx
+https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 ```
 
-已经安装旧版的用户不需要新增插件，直接更新原插件即可。
+已经安装旧版的用户需要把旧地址替换为上述新地址。只修改旧地址后的查询参数不足以刷新 Loon 的插件资源缓存。
 
 ## 功能
 
@@ -59,6 +59,12 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdBlock
 
 ## 故障排查
 
+### 插件显示已启用，但规则与脚本没有命中
+
+- 确认安装地址以 `YouTubeUltimate.lpx` 结尾；
+- 不要继续使用 `YouTubeSafariAdBlock.lpx?v=...` 作为更新方式；
+- 重新载入配置后，用 `pagead` 测试请求或 Loon 请求记录确认 Rewrite 已命中。
+
 ### 首页正常，但视频仍有广告
 
 - 确认旧插件已更新为 `YouTube Ultimate - Safari`；
@@ -79,7 +85,8 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeSafariAdBlock
 
 ## 项目文件
 
-- `YouTubeSafariAdBlock.lpx`：保持原 URL 的插件入口；
+- `YouTubeUltimate.lpx`：当前稳定插件入口；
+- `YouTubeSafariAdBlock.lpx`：旧地址兼容文件，不再作为推荐安装入口；
 - `YouTubeUltimatePlayer.js`：播放响应广告字段清理；
 - `YouTubeUltimateBrowse.js`：首页、搜索和指南广告卡片清理；
 - `YouTubeUltimateNext.js`：推荐与 `get_watch` 清理；

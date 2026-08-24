@@ -1,5 +1,11 @@
 # 更新记录
 
+## 1.0.1 - 2026-08-24
+
+- 新增 `YouTubeUltimate.lpx` 稳定入口，避免 Loon 复用旧插件地址的缓存内容；
+- 更新安装与排查说明，明确旧地址查询参数不能保证资源刷新；
+- 保留 `YouTubeSafariAdBlock.lpx` 作为历史兼容文件。
+
 ## 1.0.0 - 2026-08-24
 
 - 将原 `YouTube Safari-Style AdBlock` 原位升级为 `YouTube Ultimate - Safari`；

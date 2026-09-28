@@ -4,6 +4,7 @@
 #!homepage=https://github.com/Giu-zhao/Loon_plugin
 #!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/youtube(4).png
 #!system=macOS
+#!loon_version=3.5.1(983)
 #!tag=YouTube,Safari,AdBlock
 #!type=normal
 
@@ -20,15 +21,15 @@ AND,((PROTOCOL,QUIC),(DOMAIN,youtubei.googleapis.com)),REJECT
 
 [Rewrite]
 # 只拒绝 YouTube 自身明确的广告统计与页面广告端点，不做跨站广告域名封锁。
-^https:\/\/(?:www\.|s\.)?youtube\.com\/api\/stats\/ads(?:[\/?].*)?$ reject-200
-^https:\/\/(?:www\.|s\.)?youtube\.com\/pagead(?:[\/?].*)?$ reject-200
-^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext.*$ reject-200
+request if ${url} ~= /^https:\/\/(www\.|s\.)?youtube\.com\/api\/stats\/ads([\/?].*)?$/i then reject(200)
+request if ${url} ~= /^https:\/\/(www\.|s\.)?youtube\.com\/pagead([\/?].*)?$/i then reject(200)
+request if ${url} ~= /^https:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*adcontext.*$/i then reject(200)
 
 [Script]
-http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/player(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePlayer.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Player,argument=[{enabled},{debug}],enable={enabled}
-http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(browse|search|guide)(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateBrowse.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Browse,argument=[{enabled},{debug}],enable={enabled}
-http-response ^https:\/\/(?:www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(next|get_watch)(?:[\/?].*)?$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateNext.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Next,argument=[{enabled},{debug}],enable={enabled}
-http-response ^https:\/\/(?:(?:www|m)\.)?youtube\.com\/(?:$|\?.*|watch(?:\?.*)?|results(?:\?.*)?|feed(?:\/.*)?|shorts(?:\/.*)?|playlist(?:\?.*)?|channel\/.*|@.*|hashtag\/.*|gaming.*|live.*)$ script-path=https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePage.js?v=1.0.0,requires-body=true,timeout=10,tag=YT Ultimate Page,argument=[{enabled},{page_enhance},{debug}],enable={enabled}
+response if ${url} ~= /^https:\/\/(www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/player([\/?].*)?$/i then script("https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePlayer.js?v=1.0.0", {${enabled}, ${debug}}) with enable=${enabled}, tag="YT Ultimate Player", timeout=10, requires_body=true
+response if ${url} ~= /^https:\/\/(www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(browse|search|guide)([\/?].*)?$/i then script("https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateBrowse.js?v=1.0.0", {${enabled}, ${debug}}) with enable=${enabled}, tag="YT Ultimate Browse", timeout=10, requires_body=true
+response if ${url} ~= /^https:\/\/(www\.youtube\.com|youtubei\.googleapis\.com)\/youtubei\/v1\/(next|get_watch)([\/?].*)?$/i then script("https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimateNext.js?v=1.0.0", {${enabled}, ${debug}}) with enable=${enabled}, tag="YT Ultimate Next", timeout=10, requires_body=true
+response if ${url} ~= /^https:\/\/((www|m)\.)?youtube\.com\/($|\?.*|watch(\?.*)?|results(\?.*)?|feed(\/.*)?|shorts(\/.*)?|playlist(\?.*)?|channel\/.*|@.*|hashtag\/.*|gaming.*|live.*)$/i then script("https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimatePage.js?v=1.0.0", {${enabled}, ${page_enhance}, ${debug}}) with enable=${enabled}, tag="YT Ultimate Page", timeout=10, requires_body=true
 
 [Mitm]
 hostname = youtube.com, www.youtube.com, m.youtube.com, s.youtube.com, youtubei.googleapis.com

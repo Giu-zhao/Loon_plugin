@@ -3,6 +3,7 @@
 YouTube Ultimate 是一个面向 Loon 的单一插件入口，支持 iOS、iPadOS 和
 macOS，不支持 tvOS。它保留已验证的 Safari 网页净化逻辑，并为 YouTube 与
 YouTube Music App 增加 Protobuf 响应处理。
+插件使用 Loon 3.5.1 (983) 起支持的 Script v2 语法。
 
 安装地址：
 

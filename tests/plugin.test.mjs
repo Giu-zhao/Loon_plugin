@@ -18,6 +18,7 @@ test("plugin declares the supported systems and seven approved defaults", async 
   assert.match(plugin, /^#!name\s*=\s*YouTube Ultimate$/m);
   assert.match(plugin, /^#!author\s*=\s*Giu-zhao$/m);
   assert.match(plugin, /^#!system\s*=\s*iOS,iPadOS,macOS$/m);
+  assert.match(plugin, /^#!loon_version\s*=\s*3\.5\.1\(983\)$/m);
   assert.doesNotMatch(plugin, /tvOS/);
   assert.match(plugin, /^#!homepage\s*=\s*https:\/\/github\.com\/Giu-zhao\/Loon_plugin$/m);
   assert.match(plugin, /^enabled\s*=\s*switch,true,/m);
@@ -37,16 +38,16 @@ test("plugin routes each response endpoint exactly once to repository-owned scri
   const apiEndpoints = ['player', 'browse', 'next', 'search', 'reel/reel_watch_sequence', 'guide', 'account/get_setting', 'get_watch'];
   for (const endpoint of apiEndpoints) {
     const escaped = endpoint.replaceAll('/', '\\\/');
-    const responseLines = plugin.split('\n').filter((line) => line.startsWith('http-response ') && line.includes(escaped));
+    const responseLines = plugin.split('\n').filter((line) => line.startsWith('response if ') && line.includes(escaped));
     assert.equal(responseLines.length, 1, `${endpoint} must have one response handler`);
     assert.match(responseLines[0], /YouTubeUltimateAPI\.js\?v=2\.1\.3/);
   }
   assert.match(plugin, /YouTubeUltimatePage\.js\?v=2\.0\.0/);
   assert.match(plugin, /youtubei\\\/v1\\\/\(config\|log_event\).*YouTubeUltimateAppOnesie\.js\?v=2\.1\.0/);
-  assert.match(plugin, /http-request .*youtubei.*log_event.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
-  assert.match(plugin, /http-request .*googlevideo.*initplayback.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
+  assert.match(plugin, /request if .*youtubei.*log_event.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
+  assert.match(plugin, /request if .*googlevideo.*initplayback.*YouTubeUltimateAppRequest\.js\?v=2\.1\.0/);
 
-  const scriptMatches = [...plugin.matchAll(/script-path=https:\/\/raw\.githubusercontent\.com\/Giu-zhao\/Loon_plugin\/main\/([^?,\s]+)/g)];
+  const scriptMatches = [...plugin.matchAll(/script\("https:\/\/raw\.githubusercontent\.com\/Giu-zhao\/Loon_plugin\/main\/([^?"\s]+)/g)];
   for (const match of scriptMatches) {
     await access(path.join(root, match[1]));
     const script = await readFile(path.join(root, match[1]), 'utf8');
@@ -69,6 +70,9 @@ test("plugin avoids cross-version Rewrite syntax and never rejects normal media"
     .join("\n");
 
   assert.doesNotMatch(activeConfiguration, /^\[Rewrite\]$/m);
+  assert.doesNotMatch(activeConfiguration, /^http-(?:request|response)\s/m);
+  assert.doesNotMatch(activeConfiguration, /script-path=/);
+  assert.doesNotMatch(activeConfiguration, /requires-body|binary-body-mode/);
   assert.match(activeConfiguration, /initplayback/i);
   assert.doesNotMatch(activeConfiguration, /request if .* then reject/i);
   assert.doesNotMatch(activeConfiguration, /\(\?:/);

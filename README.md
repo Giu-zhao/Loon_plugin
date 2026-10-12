@@ -11,6 +11,11 @@ YouTube Music App 增加 Protobuf 响应处理。
 https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 ```
 
+在主配置的 `[Plugin]` 中启用此插件即可。若主配置的 `[Script]` 已直接引用
+`YouTubeUltimateAPI.js`、`YouTubeUltimateAppRequest.js`、`YouTubeUltimateAppOnesie.js`
+或 `YouTubeUltimatePage.js`，请删除对应的重复脚本条目，避免它们先于插件脚本命中，
+使插件参数开关失效。同一配置中也不要同时启用旧版 YouTube 去广告插件。
+
 ## 功能与边界
 
 - 清理 player、browse、next、search、Shorts、guide、settings 和 get_watch
@@ -49,8 +54,8 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 
 Loon 需要启用 MitM 并在设备上安装、信任证书。插件让 `youtube.com`、
 `youtubei.googleapis.com` 和 `googlevideo.com` 的 QUIC 回退到 TCP/TLS；MitM
-包含 `*.googlevideo.com`，但 Rewrite 只拒绝 URL 带明确 `&oad` 标记的
-`initplayback`，不会拒绝普通视频流或整个 Google 视频域名。
+包含 `*.googlevideo.com`，请求脚本只处理匹配的 `initplayback`，不会拒绝普通
+`videoplayback` 视频流或整个 Google 视频域名。
 
 关闭 `app_enhance` 会停止 App 响应处理，但 Loon 插件格式无法随参数动态删除
 已声明的 QUIC 与 MitM 主机范围；如需完全撤销该范围，请停用或移除插件。

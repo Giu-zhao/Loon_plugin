@@ -16,6 +16,10 @@ https://raw.githubusercontent.com/Giu-zhao/Loon_plugin/main/YouTubeUltimate.lpx
 或 `YouTubeUltimatePage.js`，请删除对应的重复脚本条目，避免它们先于插件脚本命中，
 使插件参数开关失效。同一配置中也不要同时启用旧版 YouTube 去广告插件。
 
+若主配置使用远程 YouTube 分流规则，可采用
+`https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list`，
+并将其策略设为 `YouTube`。这份规则负责选择流量出口；本插件负责脚本与 MitM 处理。
+
 ## 功能与边界
 
 - 清理 player、browse、next、search、Shorts、guide、settings 和 get_watch

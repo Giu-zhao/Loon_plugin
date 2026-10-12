@@ -1,0 +1,90 @@
+#!name=Local Service Direct
+#!desc=macOS 常用服务直连规则：Apple、微信与腾讯、远程控制、旅行服务。保留原分流范围，不包含个人服务器、节点地址或凭据。
+#!author=Giu-zhao
+#!homepage=https://github.com/Giu-zhao/Loon_plugin
+#!system=macOS
+#!tag=Routing,DIRECT
+#!type=normal
+
+[Rule]
+# 旅行服务
+PROCESS-NAME,trip,DIRECT
+PROCESS-NAME,fantopia,DIRECT
+DOMAIN-SUFFIX,trip.com,DIRECT
+DOMAIN-SUFFIX,ctrip.com,DIRECT
+DOMAIN-SUFFIX,ctrip.com.cn,DIRECT
+DOMAIN-SUFFIX,fantopia.io,DIRECT
+DOMAIN-SUFFIX,fantopia.co,DIRECT
+
+# Apple 商店、更新与系统服务
+PROCESS-NAME,app store,DIRECT
+PROCESS-NAME,appstoreagent,DIRECT
+PROCESS-NAME,appstored,DIRECT
+PROCESS-NAME,storedownloadd,DIRECT
+PROCESS-NAME,softwareupdated,DIRECT
+DOMAIN-SUFFIX,apps.apple.com,DIRECT
+DOMAIN,init.itunes.apple.com,DIRECT
+DOMAIN,upp.itunes.apple.com,DIRECT
+DOMAIN,bag.itunes.apple.com,DIRECT
+DOMAIN,cma2.itunes.apple.com,DIRECT
+DOMAIN,aod.itunes.apple.com,DIRECT
+DOMAIN,appstored.itunes.apple.com,DIRECT
+DOMAIN,iosapps.itunes.apple.com,DIRECT
+DOMAIN,osxapps.itunes.apple.com,DIRECT
+DOMAIN,play.itunes.apple.com,DIRECT
+DOMAIN,se-edge.itunes.apple.com,DIRECT
+DOMAIN,su.itunes.apple.com,DIRECT
+DOMAIN-KEYWORD,buy.itunes.apple.com,DIRECT
+DOMAIN-SUFFIX,mzstatic.com,DIRECT
+DOMAIN-SUFFIX,ls.apple.com,DIRECT
+DOMAIN-SUFFIX,gdmf.apple.com,DIRECT
+DOMAIN-SUFFIX,swcdn.apple.com,DIRECT
+DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+DOMAIN-SUFFIX,aaplimg.com,DIRECT
+DOMAIN-SUFFIX,push.apple.com,DIRECT
+DOMAIN,gs-loc-cn.apple.com,DIRECT
+
+# 微信与腾讯服务
+PROCESS-NAME,wechat,DIRECT
+PROCESS-NAME,wechatappex,DIRECT
+DOMAIN-SUFFIX,wechat.com,DIRECT
+DOMAIN-SUFFIX,servicewechat.com,DIRECT
+DOMAIN-SUFFIX,qpic.cn,DIRECT
+DOMAIN-SUFFIX,gtimg.cn,DIRECT
+DOMAIN-SUFFIX,gtimg.com,DIRECT
+DOMAIN-SUFFIX,qlogo.cn,DIRECT
+DOMAIN-SUFFIX,wechatapp.com,DIRECT
+DOMAIN-SUFFIX,wechatpay.com,DIRECT
+DOMAIN-SUFFIX,qcloud.com,DIRECT
+DOMAIN-SUFFIX,myqcloud.com,DIRECT
+DOMAIN-SUFFIX,qcloudimg.com,DIRECT
+DOMAIN-SUFFIX,tencent-cloud.com,DIRECT
+DOMAIN-SUFFIX,tencent-cloud.net,DIRECT
+DOMAIN-SUFFIX,tencentcos.com,DIRECT
+DOMAIN-SUFFIX,tencentcos.cn,DIRECT
+DOMAIN-SUFFIX,qq.com,DIRECT
+DOMAIN-SUFFIX,tencent.com,DIRECT
+DOMAIN-KEYWORD,weixin,DIRECT
+DOMAIN-KEYWORD,wechat,DIRECT
+
+# 远程控制
+DOMAIN-KEYWORD,oray,DIRECT
+DOMAIN-SUFFIX,oray.com,DIRECT
+DOMAIN-SUFFIX,oray.net,DIRECT
+DOMAIN-SUFFIX,orayimg.com,DIRECT
+DOMAIN-KEYWORD,sunlogin,DIRECT
+DOMAIN-KEYWORD,xiangrikui,DIRECT
+PROCESS-NAME,todesk,DIRECT
+PROCESS-NAME,todesk_service,DIRECT
+PROCESS-NAME,todesk_session,DIRECT
+PROCESS-NAME,todesk_session_proxy,DIRECT
+PROCESS-NAME,todesk_xpchelper,DIRECT
+PROCESS-NAME,todesk_screenwall_helper,DIRECT
+PROCESS-NAME,zagent,DIRECT
+DOMAIN-KEYWORD,todesk,DIRECT
+DOMAIN-SUFFIX,todesk.com,DIRECT
+DOMAIN-SUFFIX,todesk.cn,DIRECT
+DOMAIN-SUFFIX,todesk.com.cn,DIRECT
+
+# 其他公共服务
+DOMAIN-SUFFIX,gov.cn,DIRECT

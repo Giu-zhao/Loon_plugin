@@ -1,5 +1,7 @@
 # YouTube Ultimate Loon
 
+配套的 macOS 常用服务直连规则见 [Local Service Direct 使用说明](docs/local-service-rules.md)，安装入口为 `LocalServiceDirect.lpx`。
+
 YouTube Ultimate 是一个面向 Loon 的单一插件入口，支持 iOS、iPadOS 和
 macOS，不支持 tvOS。它保留已验证的 Safari 网页净化逻辑，并为 YouTube 与
 YouTube Music App 增加 Protobuf 响应处理。
